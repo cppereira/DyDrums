@@ -33,11 +33,11 @@
             MidiDevicesComboBoxLabel = new Label();
             COMPortLabel = new Label();
             MidiDevicesComboBox = new ComboBox();
-            COMPortComboBox = new ComboBox();
+            COMPortsComboBox = new ComboBox();
             PadsTableGroupBox = new GroupBox();
             dataGridView1 = new DataGridView();
             Type = new DataGridViewTextBoxColumn();
-            Name = new DataGridViewTextBoxColumn();
+            PadName = new DataGridViewTextBoxColumn();
             Note = new DataGridViewTextBoxColumn();
             Threshold = new DataGridViewTextBoxColumn();
             ScanTime = new DataGridViewTextBoxColumn();
@@ -67,7 +67,7 @@
             ConnectionGroupBox.Controls.Add(MidiDevicesComboBoxLabel);
             ConnectionGroupBox.Controls.Add(COMPortLabel);
             ConnectionGroupBox.Controls.Add(MidiDevicesComboBox);
-            ConnectionGroupBox.Controls.Add(COMPortComboBox);
+            ConnectionGroupBox.Controls.Add(COMPortsComboBox);
             ConnectionGroupBox.Location = new Point(349, 12);
             ConnectionGroupBox.Name = "ConnectionGroupBox";
             ConnectionGroupBox.Size = new Size(973, 84);
@@ -84,6 +84,7 @@
             ConnectCheckBox.TabIndex = 5;
             ConnectCheckBox.Text = "Conectar";
             ConnectCheckBox.UseVisualStyleBackColor = true;
+            ConnectCheckBox.CheckedChanged += ConnectCheckBox_CheckedChanged;
             // 
             // MidiDevicesComboBoxLabel
             // 
@@ -111,13 +112,13 @@
             MidiDevicesComboBox.Size = new Size(184, 23);
             MidiDevicesComboBox.TabIndex = 2;
             // 
-            // COMPortComboBox
+            // COMPortsComboBox
             // 
-            COMPortComboBox.FormattingEnabled = true;
-            COMPortComboBox.Location = new Point(99, 33);
-            COMPortComboBox.Name = "COMPortComboBox";
-            COMPortComboBox.Size = new Size(184, 23);
-            COMPortComboBox.TabIndex = 1;
+            COMPortsComboBox.FormattingEnabled = true;
+            COMPortsComboBox.Location = new Point(99, 33);
+            COMPortsComboBox.Name = "COMPortsComboBox";
+            COMPortsComboBox.Size = new Size(184, 23);
+            COMPortsComboBox.TabIndex = 1;
             // 
             // PadsTableGroupBox
             // 
@@ -132,7 +133,8 @@
             // dataGridView1
             // 
             dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridView1.Columns.AddRange(new DataGridViewColumn[] { Type, Name, Note, Threshold, ScanTime, MaskTime, Retrigger, Curve, CurveForm, XTalk, XTalkGroup, Channel, Gain });
+            dataGridView1.Columns.AddRange(new DataGridViewColumn[] { Type, PadName, Note, Threshold, ScanTime, MaskTime, Retrigger, Curve, CurveForm, XTalk, XTalkGroup, Channel, Gain });
+            dataGridView1.Enabled = false;
             dataGridView1.Location = new Point(10, 30);
             dataGridView1.Name = "dataGridView1";
             dataGridView1.Size = new Size(955, 416);
@@ -144,11 +146,11 @@
             Type.Name = "Type";
             Type.Width = 70;
             // 
-            // Name
+            // PadName
             // 
-            Name.HeaderText = "Nome";
-            Name.Name = "Name";
-            Name.Width = 80;
+            PadName.HeaderText = "Nome";
+            PadName.Name = "PadName";
+            PadName.Width = 80;
             // 
             // Note
             // 
@@ -217,6 +219,7 @@
             // 
             // EEPROMReadButton
             // 
+            EEPROMReadButton.Enabled = false;
             EEPROMReadButton.Location = new Point(349, 104);
             EEPROMReadButton.Name = "EEPROMReadButton";
             EEPROMReadButton.Size = new Size(233, 39);
@@ -248,6 +251,7 @@
             // 
             // MidiMonitorClearButton
             // 
+            MidiMonitorClearButton.Enabled = false;
             MidiMonitorClearButton.Location = new Point(16, 530);
             MidiMonitorClearButton.Name = "MidiMonitorClearButton";
             MidiMonitorClearButton.Size = new Size(179, 39);
@@ -263,10 +267,10 @@
             MidiMonitorLabel.Size = new Size(98, 15);
             MidiMonitorLabel.TabIndex = 6;
             MidiMonitorLabel.Text = "Mensagens MIDI:";
-            MidiMonitorLabel.Click += label1_Click;
             // 
             // MidiMonitorRichText
             // 
+            MidiMonitorRichText.Enabled = false;
             MidiMonitorRichText.Location = new Point(6, 43);
             MidiMonitorRichText.Name = "MidiMonitorRichText";
             MidiMonitorRichText.Size = new Size(263, 477);
@@ -299,14 +303,20 @@
 
         private GroupBox ConnectionGroupBox;
         private ComboBox MidiDevicesComboBox;
-        private ComboBox COMPortComboBox;
+        private ComboBox COMPortsComboBox;
         private Label COMPortLabel;
         private Label MidiDevicesComboBoxLabel;
         private CheckBox ConnectCheckBox;
         private GroupBox PadsTableGroupBox;
         private DataGridView dataGridView1;
+        private Button EEPROMReadButton;
+        private GroupBox MonitorGroupBox;
+        private Label MidiMonitorLabel;
+        private RichTextBox MidiMonitorRichText;
+        private Button MidiMonitorClearButton;
+        private Label HHCProgressBarLabel;
         private DataGridViewTextBoxColumn Type;
-        private DataGridViewTextBoxColumn Name;
+        private DataGridViewTextBoxColumn PadName;
         private DataGridViewTextBoxColumn Note;
         private DataGridViewTextBoxColumn Threshold;
         private DataGridViewTextBoxColumn ScanTime;
@@ -318,11 +328,5 @@
         private DataGridViewTextBoxColumn XTalkGroup;
         private DataGridViewTextBoxColumn Channel;
         private DataGridViewTextBoxColumn Gain;
-        private Button EEPROMReadButton;
-        private GroupBox MonitorGroupBox;
-        private Label MidiMonitorLabel;
-        private RichTextBox MidiMonitorRichText;
-        private Button MidiMonitorClearButton;
-        private Label HHCProgressBarLabel;
     }
 }
