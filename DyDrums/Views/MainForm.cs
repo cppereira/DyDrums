@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using DyDrums.Controllers;
 using DyDrums.Models;
 using DyDrums.Services;
@@ -9,7 +10,9 @@ namespace DyDrums
     {
         private SerialController _serialController;
         private DyDrums.Controllers.MidiController _midiController;
-        private SerialManager _serialManager;
+        private SerialManager _serialManager = new SerialManager();
+        private MidiManager _midiManager = new MidiManager();
+
         public MainForm()
 
         {
@@ -27,8 +30,9 @@ namespace DyDrums
             ConnectCheckBox.FlatStyle = FlatStyle.Standard;
             ConnectCheckBox.Size = new Size(100, 40);
 
+            _serialController.MidiMessageReceived += OnMidiMessageReceived;
 
-
+            Debug.WriteLine("Inscrito no evento MIDI!");
             _serialController.GetCOMPorts();
             _midiController.GetMidiDevices();
         }
@@ -70,6 +74,8 @@ namespace DyDrums
                         _serialController.Connect(selectedPort);
                     else
                         throw new Exception("Nenhuma porta COM selecionada.");
+
+                    MidiMonitorRichText.Enabled = true;
                 }
                 else
                 {
@@ -82,6 +88,55 @@ namespace DyDrums
             {
 
             }
+        }
+
+        private void OnMidiMessageReceived(int channel, int note, int velocity)
+        {
+            this.Invoke(() =>
+            {
+                string timestamp = DateTime.Now.ToString("ss,fff");
+
+                MidiMonitorRichText.SelectionFont = new Font(MidiMonitorRichText.Font, FontStyle.Bold);
+                switch (note)
+                {
+                    case 36: MidiMonitorRichText.SelectionColor = Color.Green; break;
+                    case 38: MidiMonitorRichText.SelectionColor = Color.Red; break;
+                    case 98: MidiMonitorRichText.SelectionColor = Color.Brown; break;
+                    case 47: MidiMonitorRichText.SelectionColor = Color.Brown; break;
+                    case 45: MidiMonitorRichText.SelectionColor = Color.Brown; break;
+                    case 43: MidiMonitorRichText.SelectionColor = Color.Brown; break;
+                    case 41: MidiMonitorRichText.SelectionColor = Color.Brown; break;
+                    case 49: MidiMonitorRichText.SelectionColor = Color.Blue; break;
+                    case 55: MidiMonitorRichText.SelectionColor = Color.Blue; break;
+                    case 57: MidiMonitorRichText.SelectionColor = Color.Blue; break;
+                    case 51: MidiMonitorRichText.SelectionColor = Color.Blue; break;
+                    case 52: MidiMonitorRichText.SelectionColor = Color.Blue; break;
+                    case 53: MidiMonitorRichText.SelectionColor = Color.Blue; break;
+                    case 7: MidiMonitorRichText.SelectionColor = Color.Blue; break;
+                    case 24: MidiMonitorRichText.SelectionColor = Color.Blue; break;
+                    default: MidiMonitorRichText.SelectionColor = Color.Black; break;
+                }
+
+                string formatted = string.Format("[{0}] => Canal: {1,-2} | Nota: {2,-3} | Velocity: {3,-3}", timestamp, channel, note, velocity);
+                MidiMonitorRichText.AppendText(formatted + Environment.NewLine);
+                MidiMonitorRichText.SelectionStart = MidiMonitorRichText.Text.Length;
+                MidiMonitorRichText.ScrollToCaret();
+                Application.DoEvents();
+
+                // Envia para o MIDI
+                _midiManager.SendNoteOn(note, velocity, 0);
+                Task.Run(async () =>
+                {
+                    await Task.Delay(5);
+                    _midiManager.PlayNoteSafe(note, velocity, 20, channel);
+                });
+
+                //// Atualiza barra de Hi-Hat (nota 4 por padrão)
+                //if (note == 4)
+                //{
+                //    HHCVerticalProgressBar.Value = Math.Min(velocity, HHCVerticalProgressBar.Maximum);
+                //}
+            });
         }
     }
 }

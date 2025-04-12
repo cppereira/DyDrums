@@ -243,7 +243,7 @@
             // HHCProgressBarLabel
             // 
             HHCProgressBarLabel.AutoSize = true;
-            HHCProgressBarLabel.Location = new Point(280, 19);
+            HHCProgressBarLabel.Location = new Point(289, 19);
             HHCProgressBarLabel.Name = "HHCProgressBarLabel";
             HHCProgressBarLabel.Size = new Size(36, 15);
             HHCProgressBarLabel.TabIndex = 7;
@@ -273,7 +273,7 @@
             MidiMonitorRichText.Enabled = false;
             MidiMonitorRichText.Location = new Point(6, 43);
             MidiMonitorRichText.Name = "MidiMonitorRichText";
-            MidiMonitorRichText.Size = new Size(263, 477);
+            MidiMonitorRichText.Size = new Size(275, 477);
             MidiMonitorRichText.TabIndex = 4;
             MidiMonitorRichText.Text = "";
             // 

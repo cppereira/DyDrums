@@ -7,7 +7,9 @@ namespace DyDrums.Services
     {
         private SerialPort _serialPort;
         private MainForm _mainForm;
-
+        private List<byte> currentSysex = new();
+        private static List<byte[]> fullSysexMessages = new();
+        public event Action<int, int, int>? MidiMessageReceived;
         public SerialManager() { }
 
         public void Connect(string portName, int baudRate = 115200)
@@ -73,14 +75,11 @@ namespace DyDrums.Services
                 {
                     int b = _serialPort.ReadByte();
 
-                    if (b > 0)
-                        Debug.WriteLine($"[SerialManager] Você tocou um pad e eu recebi os dados com sucesso!");
-
                     if (b == 0xF0)
                     {
                         MessageBox.Show("Recebi 0xF0");
-                        //currentSysex.Clear();
-                        //currentSysex.Add((byte)b);
+                        currentSysex.Clear();
+                        currentSysex.Add((byte)b);
                     }
                     //else if (b == 0xF7)
                     //{
@@ -98,35 +97,35 @@ namespace DyDrums.Services
                     //{
                     //    currentSysex.Add((byte)b);
                     //}
-                    //else
-                    //{
-                    //    //if (_serialPort.BytesToRead >= 2)
-                    //    //{
-                    //    //    int channel = (b & 0x0F) + 1;
-                    //    //    int data1 = _serialPort.ReadByte();
-                    //    //    int data2 = _serialPort.ReadByte();
+                    else
+                    {
+                        if (_serialPort.BytesToRead >= 2)
+                        {
+                            int channel = (b & 0x0F) + 1;
+                            int data1 = _serialPort.ReadByte();
+                            int data2 = _serialPort.ReadByte();
 
-                    //    //    //if (data1 == 4)
-                    //    //    //{
-                    //    //    //    MidiManager.Instance.SendControlChange(channel, 4, data2);
+                            if (data1 == 4)
+                            {
+                                //MidiManager.Instance.SendControlChange(channel, 4, data2);
 
 
-                    //    //    //    MainForm.Instance?.Invoke(() =>
-                    //    //    //    {
-                    //    //    //        if (MainForm.Instance.HHCVerticalProgressBar != null)
-                    //    //    //        {
-                    //    //    //            int max = MainForm.Instance.HHCVerticalProgressBar.Maximum;
-                    //    //    //            int invertedValue = max - data2;
-                    //    //    //            MainForm.Instance.HHCVerticalProgressBar.Value = Math.Max(MainForm.Instance.HHCVerticalProgressBar.Minimum, invertedValue);
-                    //    //    //        }
-                    //    //    //    }); ;
-                    //    //    //}
-                    //    //    //else
-                    //    //    //{
-                    //    //    //    MidiMessageReceived?.Invoke(channel, data1, data2);
-                    //    //    //}
-                    //    //}
-                    //}
+                                //MainForm.Instance?.Invoke(() =>
+                                //{
+                                //    if (MainForm.Instance.HHCVerticalProgressBar != null)
+                                //    {
+                                //        int max = MainForm.Instance.HHCVerticalProgressBar.Maximum;
+                                //        int invertedValue = max - data2;
+                                //        MainForm.Instance.HHCVerticalProgressBar.Value = Math.Max(MainForm.Instance.HHCVerticalProgressBar.Minimum, invertedValue);
+                                //    }
+                                //}); ;
+                            }
+                            else
+                            {
+                                MidiMessageReceived?.Invoke(channel, data1, data2);
+                            }
+                        }
+                    }
                 }
             }
             catch (Exception ex)
