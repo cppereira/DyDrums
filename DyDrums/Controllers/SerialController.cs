@@ -43,12 +43,5 @@ namespace DyDrums.Controllers
         {
             _serialManager.Disconnect();
         }
-
-        public async Task ConnectToPortAsync(string portName)
-        {
-            _serialManager.Connect(portName);           // ← Usa o seu método premium
-            await _serialManager.HandshakeAsync();      // ← Manda o Sysex depois
-        }
-
     }
 }

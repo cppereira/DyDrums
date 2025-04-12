@@ -251,9 +251,9 @@
             MonitorGroupBox.Controls.Add(MidiMonitorClearButton);
             MonitorGroupBox.Controls.Add(MidiMonitorLabel);
             MonitorGroupBox.Controls.Add(MidiMonitorRichText);
-            MonitorGroupBox.Location = new Point(12, 12);
+            MonitorGroupBox.Location = new Point(6, 12);
             MonitorGroupBox.Name = "MonitorGroupBox";
-            MonitorGroupBox.Size = new Size(331, 587);
+            MonitorGroupBox.Size = new Size(337, 587);
             MonitorGroupBox.TabIndex = 3;
             MonitorGroupBox.TabStop = false;
             MonitorGroupBox.Text = "Monitor";
@@ -261,7 +261,7 @@
             // HHCVerticalProgressBar
             // 
             HHCVerticalProgressBar.BarColor = Color.Aquamarine;
-            HHCVerticalProgressBar.Location = new Point(301, 43);
+            HHCVerticalProgressBar.Location = new Point(310, 43);
             HHCVerticalProgressBar.Name = "HHCVerticalProgressBar";
             HHCVerticalProgressBar.Size = new Size(14, 477);
             HHCVerticalProgressBar.TabIndex = 8;
@@ -269,7 +269,7 @@
             // HHCProgressBarLabel
             // 
             HHCProgressBarLabel.AutoSize = true;
-            HHCProgressBarLabel.Location = new Point(292, 19);
+            HHCProgressBarLabel.Location = new Point(300, 19);
             HHCProgressBarLabel.Name = "HHCProgressBarLabel";
             HHCProgressBarLabel.Size = new Size(36, 15);
             HHCProgressBarLabel.TabIndex = 7;
@@ -278,12 +278,13 @@
             // MidiMonitorClearButton
             // 
             MidiMonitorClearButton.Enabled = false;
-            MidiMonitorClearButton.Location = new Point(16, 530);
+            MidiMonitorClearButton.Location = new Point(49, 534);
             MidiMonitorClearButton.Name = "MidiMonitorClearButton";
             MidiMonitorClearButton.Size = new Size(179, 39);
             MidiMonitorClearButton.TabIndex = 4;
             MidiMonitorClearButton.Text = "Limpar";
             MidiMonitorClearButton.UseVisualStyleBackColor = true;
+            MidiMonitorClearButton.Click += MidiMonitorClearButton_Click;
             // 
             // MidiMonitorLabel
             // 
@@ -299,7 +300,7 @@
             MidiMonitorRichText.Enabled = false;
             MidiMonitorRichText.Location = new Point(6, 43);
             MidiMonitorRichText.Name = "MidiMonitorRichText";
-            MidiMonitorRichText.Size = new Size(275, 477);
+            MidiMonitorRichText.Size = new Size(298, 477);
             MidiMonitorRichText.TabIndex = 4;
             MidiMonitorRichText.Text = "";
             // 

@@ -8,6 +8,7 @@ namespace DyDrums
 {
     public partial class MainForm : Form, IMainFormView
     {
+
         private SerialController _serialController;
         private MidiController _midiController;
         private SerialManager _serialManager;
@@ -16,11 +17,29 @@ namespace DyDrums
         private EEPROMManager _eepromManager;
         private EEPROMController _eepromController;
 
+        public void SetMidiController(MidiController controller)
+        {
+            _midiController = controller ?? throw new ArgumentNullException(nameof(controller));
+        }
+
         public MainForm()
 
         {
             InitializeComponent();
             InitializeManagersAndControllers();
+
+            _padManager.PadsUpdated += (pads) =>
+            {
+                Invoke(() => RefreshPadGrid(pads));
+            };
+
+            _serialManager.SysexBatchReceived += (sysexList) =>
+            {
+                _padManager.ProcessSysex(sysexList);
+            };
+
+            _midiController.HHCValueReceived += OnHHCValueReceived;
+
         }
 
         private void MainForm_Load(object? sender, EventArgs? e)
@@ -32,18 +51,26 @@ namespace DyDrums
 
         private void InitializeManagersAndControllers()
         {
-            _serialManager = new SerialManager();
+
             _midiManager = new MidiManager();
+            _midiController = new MidiController(this, _midiManager);
+            _serialManager = new SerialManager(_midiController);
+
+            _serialManager.SetMidiController(_midiController);
 
             _eepromManager = new EEPROMManager(_serialManager);
             _padManager = new PadManager(_serialManager);
 
             _serialController = new SerialController(this, _serialManager);
-            _midiController = new MidiController(this, _midiManager);
-
             _eepromController = new EEPROMController(_eepromManager, _padManager, this);
 
             _serialManager.SysexBatchReceived += _eepromController.HandleSysexMessages;
+
+        }
+
+        private void RefreshPadGrid(List<Pad> pads)
+        {
+            PadsGridView.DataSource = new BindingList<Pad>(pads);
         }
 
         private void SetupConnectCheckBox()
@@ -72,7 +99,27 @@ namespace DyDrums
 
 
 
+        private void OnHHCValueReceived(int data2)
+        {
+            if (InvokeRequired)
+            {
+                BeginInvoke(() => UpdateHHCProgressBar(data2));
+            }
+            else
+            {
+                UpdateHHCProgressBar(data2);
+            }
+        }
 
+        private void UpdateHHCProgressBar(int data2)
+        {
+            if (HHCVerticalProgressBar != null)
+            {
+                int max = HHCVerticalProgressBar.Maximum;
+                int invertedValue = max - data2;
+                HHCVerticalProgressBar.Value = Math.Max(HHCVerticalProgressBar.Minimum, invertedValue);
+            }
+        }
 
 
 
@@ -142,8 +189,11 @@ namespace DyDrums
             {
                 if (ConnectCheckBox.Checked)
                 {
+                    MidiMonitorRichText.Enabled = true;
+                    MidiMonitorClearButton.Enabled = true;
                     EEPROMReadButton.Enabled = true;
                     ConnectCheckBox.Text = "Desconectar";
+                    PadsGridView.Enabled = true;
                     // Obter porta selecionada
                     string selectedPort = COMPortsComboBox.SelectedItem?.ToString() ?? "";
                     if (!string.IsNullOrEmpty(selectedPort))
@@ -151,10 +201,20 @@ namespace DyDrums
                     else
                         throw new Exception("Nenhuma porta COM selecionada.");
 
+                    // Obter dispositivo MIDI selecionado
+                    string selectedMidiDevice = MidiDevicesComboBox.SelectedItem?.ToString() ?? "";
+                    if (!string.IsNullOrEmpty(selectedMidiDevice))
+                        _midiController.Connect(selectedMidiDevice);
+                    else
+                        throw new Exception("Nenhum dispositivo MIDI selecionado.");
                     MidiMonitorRichText.Enabled = true;
                 }
                 else
                 {
+                    PadsGridView.Enabled = false;
+                    MidiMonitorRichText.Enabled = false;
+                    MidiMonitorClearButton.Enabled = false;
+                    EEPROMReadButton.Enabled = false;
                     ConnectCheckBox.Text = "Conectar";
                     _serialController.Disconnect();
                     //_midiManager.Disconnect();
@@ -200,11 +260,11 @@ namespace DyDrums
                 Application.DoEvents();
 
                 // Envia para o MIDI
-                _midiManager.SendNoteOn(note, velocity, 0);
+                //_midiManager.SendNoteOn(note, velocity, 0);
                 Task.Run(async () =>
                 {
-                    await Task.Delay(5);
-                    _midiManager.PlayNoteSafe(note, velocity, 20, channel);
+                    //await Task.Delay(5);
+                    _midiController.SendMidiMessage(note, velocity, 20, channel);
                 });
 
                 // Atualiza barra de Hi-Hat (nota 4 por padrão)
@@ -227,18 +287,21 @@ namespace DyDrums
             });
         }
 
-        private async void EEPROMReadButton_Click(object sender, EventArgs e)
+        private void EEPROMReadButton_Click(object sender, EventArgs e)
         {
-            _padManager.ResetSysexProcessing();
-            string selectedPort = COMPortsComboBox.SelectedItem?.ToString();
-
-            if (string.IsNullOrWhiteSpace(selectedPort))
+            if (!_serialManager.IsConnected)
             {
-                MessageBox.Show("Selecione uma porta válida.");
+                MessageBox.Show("Conecte-se a uma porta primeiro.");
                 return;
             }
 
-            await _serialController.ConnectToPortAsync(selectedPort);
+            _padManager.ResetSysexProcessing();     // Limpa estado
+            _serialManager.Handshake();             // Direto, sem esperar
+        }
+
+        private void MidiMonitorClearButton_Click(object sender, EventArgs e)
+        {
+            MidiMonitorRichText.Clear();
         }
     }
 }

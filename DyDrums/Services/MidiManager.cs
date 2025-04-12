@@ -9,6 +9,8 @@ namespace DyDrums.Services
         private SerialController _serialController;
         private MidiOut midiOut;
         public event Action<int, int, int>? MidiMessageReceived;
+        public event Action<int>? HHCValueReceived;
+
 
 
         public List<MidiDevice> GetMidiDevices()
@@ -23,6 +25,26 @@ namespace DyDrums.Services
                 });
             }
             return devices;
+        }
+
+        public bool Connect(string deviceName)
+        {
+            for (int i = 0; i < MidiOut.NumberOfDevices; i++)
+            {
+                if (MidiOut.DeviceInfo(i).ProductName == deviceName)
+                {
+                    Disconnect(); // fecha se já houver conexão
+                    midiOut = new MidiOut(i);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public void Disconnect()
+        {
+            midiOut?.Dispose();
+            midiOut = null;
         }
 
         public void SendNoteOn(int note, int velocity, int channel = 0)
@@ -45,6 +67,21 @@ namespace DyDrums.Services
             SendNoteOn((byte)note, (byte)velocity, (byte)channel);
             await Task.Delay(durationMs);
             SendNoteOff((byte)note, (byte)channel);
+        }
+
+        public void ProcessHHCValue(int rawValue)
+        {
+            HHCValueReceived?.Invoke(rawValue);
+        }
+
+        public void SendControlChange(int channel, int control, int value)
+        {
+            if (midiOut != null)
+            {
+                byte status = (byte)(0xB0 | channel - 1); // CC message
+                int midiMessage = status | control << 8 | value << 16;
+                midiOut.Send(midiMessage);
+            }
         }
     }
 }

@@ -5,6 +5,7 @@ using DyDrums.Services;
 
 public class PadManager
 {
+    public event Action<List<Pad>>? PadsUpdated;
     private readonly string _configPath = "pads.json";
     private readonly EEPROMManager _eepromManager;
 
@@ -91,30 +92,39 @@ public class PadManager
     {
         _receivedMessages.AddRange(messages);
 
-        if (_alreadyProcessed || !_receivedMessages.Any(IsEndMessage))
+        // Verifica se a última mensagem indica o fim da transmissão
+        if (_alreadyProcessed || !_receivedMessages.Any(m => IsEndMessage(m)))
+        {
             return;
+        }
 
         _alreadyProcessed = true;
 
-        var pads = _eepromManager.ParseSysex(_receivedMessages)
+        var pads = _eepromManager.ParseSysex(_receivedMessages);
+
+        // Remove pads inválidos ou fantasmas
+        pads = pads
             .Where(p => p != null && p.Pin >= 0 && p.Pin < 15)
             .ToList();
 
-        var existingPads = LoadFromDisk();
-
-        foreach (var pad in pads)
-        {
-            var match = existingPads.FirstOrDefault(p => p.Pin == pad.Pin);
-            if (match != null)
-            {
-                pad.PadName = match.PadName;
-            }
-        }
-
+        //// Tenta manter os nomes antigos, se houver
+        //var existingPads = configManager.LoadFromFile();
+        //foreach (var pad in pads)
+        //{
+        //    var match = existingPads.FirstOrDefault(p => p.Pin == pad.Pin);
+        //    if (match != null)
+        //    {
+        //        pad.Name = match.Name;
+        //    }
+        //}
         LoadConfigs(pads);
         SavePads();
+        PadsUpdated?.Invoke(Pads);
         _receivedMessages.Clear();
     }
+
+
+
 
     private List<Pad> LoadFromDisk()
     {
@@ -134,7 +144,13 @@ public class PadManager
     // Stub provisório pra compilar — você pode implementar sua lógica
     private bool IsEndMessage(byte[] message)
     {
-        return message.Length >= 2 && message[0] == 0xF0 && message[^1] == 0xF7 &&
-               message.Length >= 7 && message[1] == 0x77; // ou qualquer lógica de término
+        return message.Length == 7 &&
+               message[0] == 0xF0 &&
+               message[1] == 0x77 &&
+               message[2] == 0x02 &&
+               message[3] == 0x7F &&
+               message[4] == 0x7F &&
+               message[5] == 0x7F &&
+               message[6] == 0xF7;
     }
 }
