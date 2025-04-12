@@ -9,24 +9,31 @@ namespace DyDrums.Services
         private MainForm _mainForm;
         private List<byte> currentSysex = new();
         private static List<byte[]> fullSysexMessages = new();
+        public event Action<List<byte[]>>? SysexBatchReceived;
 
         //Events
         public event Action<int, int, int>? MidiMessageReceived;
         public event Action<int>? HHCVelocityReceived;
 
 
-        public SerialManager() { }
+        public SerialManager()
+        {
+
+            Debug.WriteLine($"[SerialManager] Instanciado: {GetHashCode()}");
+        }
 
         public void Connect(string portName, int baudRate = 115200)
         {
             try
             {
+                Debug.WriteLine("[Connect] Chamado para porta " + portName);
+
                 if (_serialPort != null)
                 {
+                    Debug.WriteLine("[Connect] Fechando porta existente.");
                     _serialPort.DataReceived -= SerialPort_DataReceived;
                     if (_serialPort.IsOpen)
                         _serialPort.Close();
-
                     _serialPort.Dispose();
                     _serialPort = null;
                 }
@@ -35,7 +42,7 @@ namespace DyDrums.Services
                 _serialPort.DataReceived += SerialPort_DataReceived;
                 _serialPort.Open();
 
-                Debug.WriteLine($"[SerialManager] Porta {portName} conectada com sucesso.");
+                Debug.WriteLine("[Connect] Porta aberta com sucesso.");
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -80,36 +87,39 @@ namespace DyDrums.Services
                 {
                     int b = _serialPort.ReadByte();
 
+                    // Início de uma nova mensagem SysEx
                     if (b == 0xF0)
                     {
-                        MessageBox.Show("Recebi 0xF0");
                         currentSysex.Clear();
                         currentSysex.Add((byte)b);
                     }
-                    //else if (b == 0xF7)
-                    //{
-                    //    currentSysex.Add((byte)b);
-                    //    fullSysexMessages.Add(currentSysex.ToArray());
-                    //    currentSysex.Clear();
+                    // Fim da mensagem SysEx
+                    else if (b == 0xF7)
+                    {
+                        currentSysex.Add((byte)b);
+                        fullSysexMessages.Add(currentSysex.ToArray());
+                        currentSysex.Clear();
 
-                    //    MainForm.Instance.BeginInvoke(new Action(() =>
-                    //    {
-                    //        padManager.ProcessSysex(fullSysexMessages, MainForm.Instance.PadsTable);
-                    //        fullSysexMessages.Clear();
-                    //    }));
-                    //}
-                    //else if (currentSysex.Count > 0)
-                    //{
-                    //    currentSysex.Add((byte)b);
-                    //}
+                        // Dispara o evento para processamento externo
+                        SysexBatchReceived?.Invoke(fullSysexMessages.ToList());
+                        fullSysexMessages.Clear();
+                    }
+                    // Continuando mensagem SysEx
+                    else if (currentSysex.Count > 0)
+                    {
+                        currentSysex.Add((byte)b);
+                    }
+                    // Se não é SysEx, pode ser MIDI normal
                     else
                     {
+                        // Verifica se tem dados suficientes pro pacote MIDI (3 bytes)
                         if (_serialPort.BytesToRead >= 2)
                         {
                             int channel = (b & 0x0F) + 1;
                             int data1 = _serialPort.ReadByte();
                             int data2 = _serialPort.ReadByte();
 
+                            // Se for mensagem de HHC (nota 4 por convenção)
                             if (data1 == 4)
                             {
                                 HHCVelocityReceived?.Invoke(data2);
@@ -124,13 +134,103 @@ namespace DyDrums.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[SerialManager] Erro na leitura: {ex.Message}");
+                Debug.WriteLine($"[SerialManager] Erro na leitura da serial: {ex.Message}");
             }
         }
+
 
         public string[] GetCOMPorts()
         {
             return SerialPort.GetPortNames();
         }
+
+
+        public async Task HandshakeAsync()
+        {
+            const int totalPads = 15;
+
+            if (_serialPort == null)
+            {
+                Debug.WriteLine("[HandshakeAsync] _serialPort está NULL.");
+                return;
+            }
+
+            if (!EnsurePortOpen())
+            {
+                Debug.WriteLine("[HandshakeAsync] Porta não foi aberta.");
+                return;
+            }
+
+            byte[] parameters = new byte[]
+            {
+                0x00, 0x01, 0x02, 0x03,
+                0x04, 0x05, 0x06, 0x07,
+                0x08, 0x0D, 0x0E, 0x0F
+            };
+
+            try
+            {
+                // só 1 pad por vez, e 13 mensagens com pausa de 20ms
+                for (int pad = 0; pad < totalPads; pad++)
+                {
+                    foreach (byte param in parameters)
+                    {
+                        var msg = BuildSysExRequest((byte)pad, param);
+                        if (_serialPort == null)
+                        {
+                            Debug.WriteLine("[SerialManager] ERRO: _serialPort está NULL antes do Write!");
+                            return;
+                        }
+                        _serialPort.Write(msg, 0, msg.Length);
+                        await Task.Delay(20); // tempo p/ Arduino respirar
+                    }
+                    await Task.Delay(100); // pausa entre pads
+                }
+
+                var endMessage = new byte[] { 0xF0, 0x77, 0x02, 0x7F, 0x7F, 0x7F, 0xF7 };
+                _serialPort.Write(endMessage, 0, endMessage.Length);
+
+                Debug.WriteLine("[HANDSHAKE] Handshake concluído.");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[HANDSHAKE] Erro: {ex.Message}");
+            }
+        }
+
+
+
+        private byte[] BuildSysExRequest(byte pad, byte param)
+        {
+            return new byte[] { 0xF0, 0x77, 0x02, pad, param, 0x00, 0xF7 };
+        }
+
+        private bool EnsurePortOpen()
+        {
+            Debug.WriteLine($"[EnsurePortOpen] _serialPort is null? {_serialPort == null}");
+            Debug.WriteLine($"[EnsurePortOpen] _serialPort.IsOpen? {_serialPort?.IsOpen}");
+
+            if (_serialPort == null) return false;
+
+            if (!_serialPort.IsOpen)
+            {
+                try
+                {
+                    _serialPort.Open();
+                    Debug.WriteLine("[SerialManager] Porta aberta dinamicamente.");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine("[SerialManager] Falha ao abrir: " + ex.Message);
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
 }
+
+
+
+

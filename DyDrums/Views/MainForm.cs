@@ -1,4 +1,4 @@
-using System.Diagnostics;
+using System.ComponentModel;
 using DyDrums.Controllers;
 using DyDrums.Models;
 using DyDrums.Services;
@@ -9,34 +9,108 @@ namespace DyDrums
     public partial class MainForm : Form, IMainFormView
     {
         private SerialController _serialController;
-        private DyDrums.Controllers.MidiController _midiController;
-        private SerialManager _serialManager = new SerialManager();
-        private MidiManager _midiManager = new MidiManager();
+        private MidiController _midiController;
+        private SerialManager _serialManager;
+        private MidiManager _midiManager;
+        private PadManager _padManager;
+        private EEPROMManager _eepromManager;
+        private EEPROMController _eepromController;
 
         public MainForm()
 
         {
             InitializeComponent();
-            _serialController = new SerialController(this); // <- passa a si mesmo para o Controller, sem instanciar...
-            _midiController = new MidiController(this); // <- passa a si mesmo para o Controller, sem instanciar...
-            _serialManager = new SerialManager();
+            InitializeManagersAndControllers();
         }
 
         private void MainForm_Load(object? sender, EventArgs? e)
         {
-            //Transforma o CheckBox em Botao
+            SetupConnectCheckBox();
+            RegisterSerialEvents();
+            LoadInitialData();
+        }
+
+        private void InitializeManagersAndControllers()
+        {
+            _serialManager = new SerialManager();
+            _midiManager = new MidiManager();
+
+            _eepromManager = new EEPROMManager(_serialManager);
+            _padManager = new PadManager(_serialManager);
+
+            _serialController = new SerialController(this, _serialManager);
+            _midiController = new MidiController(this, _midiManager);
+
+            _eepromController = new EEPROMController(_eepromManager, _padManager, this);
+
+            _serialManager.SysexBatchReceived += _eepromController.HandleSysexMessages;
+        }
+
+        private void SetupConnectCheckBox()
+        {
             ConnectCheckBox.Appearance = Appearance.Button;
             ConnectCheckBox.TextAlign = ContentAlignment.MiddleCenter;
             ConnectCheckBox.FlatStyle = FlatStyle.Standard;
             ConnectCheckBox.Size = new Size(100, 40);
+        }
 
+        private void RegisterSerialEvents()
+        {
             _serialController.MidiMessageReceived += OnMidiMessageReceived;
             _serialController.HHCVelocityReceived += UpdateHHCBar;
+        }
 
-            Debug.WriteLine("Inscrito no evento MIDI!");
+        private void LoadInitialData()
+        {
             _serialController.GetCOMPorts();
             _midiController.GetMidiDevices();
+
+            _padManager.LoadPads();
+            PopulateGrid();
+            PadsGridView.DataSource = new BindingList<Pad>(_padManager.Pads);
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        public void RefreshPadGrid()
+        {
+            PadsGridView.DataSource = new BindingList<Pad>(_padManager.Pads);
+        }
+
+        private void PopulateGrid()
+        {
+            var bindingList = new BindingList<Pad>(_padManager.Pads);
+            var source = new BindingSource(bindingList, null);
+            PadsGridView.AutoGenerateColumns = false;
+            PadsGridView.DataSource = source;
+
+            // Se quiser esconder ou renomear colunas:            
+            if (PadsGridView.Columns.Contains("Pin"))
+            {
+                PadsGridView.Columns["Pin"].Visible = false;
+            }
+
+            //PadsGridView.Columns["CurveForm"].HeaderText = "Curve Form";
+            //PadsGridView.Columns["XtalkGroup"].HeaderText = "Xtalk Group";
+        }
+
+        private void PadsGridView_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            _padManager.SavePads(); // salva automático quando editar algo
+        }
+
 
         public void UpdateCOMPortsComboBox(string[] ports)
         {
@@ -68,6 +142,7 @@ namespace DyDrums
             {
                 if (ConnectCheckBox.Checked)
                 {
+                    EEPROMReadButton.Enabled = true;
                     ConnectCheckBox.Text = "Desconectar";
                     // Obter porta selecionada
                     string selectedPort = COMPortsComboBox.SelectedItem?.ToString() ?? "";
@@ -150,6 +225,20 @@ namespace DyDrums
                 int invertedValue = max - value;
                 HHCVerticalProgressBar.Value = Math.Max(HHCVerticalProgressBar.Minimum, invertedValue);
             });
+        }
+
+        private async void EEPROMReadButton_Click(object sender, EventArgs e)
+        {
+            _padManager.ResetSysexProcessing();
+            string selectedPort = COMPortsComboBox.SelectedItem?.ToString();
+
+            if (string.IsNullOrWhiteSpace(selectedPort))
+            {
+                MessageBox.Show("Selecione uma porta válida.");
+                return;
+            }
+
+            await _serialController.ConnectToPortAsync(selectedPort);
         }
     }
 }

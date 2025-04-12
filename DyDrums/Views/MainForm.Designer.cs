@@ -35,7 +35,7 @@
             MidiDevicesComboBox = new ComboBox();
             COMPortsComboBox = new ComboBox();
             PadsTableGroupBox = new GroupBox();
-            dataGridView1 = new DataGridView();
+            PadsGridView = new DataGridView();
             Type = new DataGridViewTextBoxColumn();
             PadName = new DataGridViewTextBoxColumn();
             Note = new DataGridViewTextBoxColumn();
@@ -58,7 +58,7 @@
             MidiMonitorRichText = new RichTextBox();
             ConnectionGroupBox.SuspendLayout();
             PadsTableGroupBox.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)PadsGridView).BeginInit();
             MonitorGroupBox.SuspendLayout();
             SuspendLayout();
             // 
@@ -122,7 +122,7 @@
             // 
             // PadsTableGroupBox
             // 
-            PadsTableGroupBox.Controls.Add(dataGridView1);
+            PadsTableGroupBox.Controls.Add(PadsGridView);
             PadsTableGroupBox.Location = new Point(349, 147);
             PadsTableGroupBox.Name = "PadsTableGroupBox";
             PadsTableGroupBox.Size = new Size(973, 452);
@@ -130,89 +130,105 @@
             PadsTableGroupBox.TabStop = false;
             PadsTableGroupBox.Text = "Pads";
             // 
-            // dataGridView1
+            // PadsGridView
             // 
-            dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridView1.Columns.AddRange(new DataGridViewColumn[] { Type, PadName, Note, Threshold, ScanTime, MaskTime, Retrigger, Curve, CurveForm, XTalk, XTalkGroup, Channel, Gain });
-            dataGridView1.Enabled = false;
-            dataGridView1.Location = new Point(10, 30);
-            dataGridView1.Name = "dataGridView1";
-            dataGridView1.Size = new Size(955, 416);
-            dataGridView1.TabIndex = 0;
+            PadsGridView.AllowUserToAddRows = false;
+            PadsGridView.AllowUserToDeleteRows = false;
+            PadsGridView.AllowUserToResizeColumns = false;
+            PadsGridView.AllowUserToResizeRows = false;
+            PadsGridView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            PadsGridView.Columns.AddRange(new DataGridViewColumn[] { Type, PadName, Note, Threshold, ScanTime, MaskTime, Retrigger, Curve, CurveForm, XTalk, XTalkGroup, Channel, Gain });
+            PadsGridView.Location = new Point(10, 30);
+            PadsGridView.Name = "PadsGridView";
+            PadsGridView.Size = new Size(955, 416);
+            PadsGridView.TabIndex = 0;
             // 
             // Type
             // 
+            Type.DataPropertyName = "Type";
             Type.HeaderText = "Sensor";
             Type.Name = "Type";
             Type.Width = 70;
             // 
             // PadName
             // 
+            PadName.DataPropertyName = "PadName";
             PadName.HeaderText = "Nome";
             PadName.Name = "PadName";
             PadName.Width = 80;
             // 
             // Note
             // 
+            Note.DataPropertyName = "Note";
             Note.HeaderText = "Nota";
             Note.Name = "Note";
             Note.Width = 60;
             // 
             // Threshold
             // 
+            Threshold.DataPropertyName = "Threshold";
             Threshold.HeaderText = "Sensi";
             Threshold.Name = "Threshold";
             Threshold.Width = 60;
             // 
             // ScanTime
             // 
+            ScanTime.DataPropertyName = "ScanTime";
             ScanTime.HeaderText = "Leitura";
             ScanTime.Name = "ScanTime";
             ScanTime.Width = 70;
             // 
             // MaskTime
             // 
+            MaskTime.DataPropertyName = "MaskTime";
             MaskTime.HeaderText = "Bloqueio";
             MaskTime.Name = "MaskTime";
             MaskTime.Width = 70;
             // 
             // Retrigger
             // 
+            Retrigger.DataPropertyName = "Retrigger";
             Retrigger.HeaderText = "Repetição";
             Retrigger.Name = "Retrigger";
             Retrigger.Width = 70;
             // 
             // Curve
             // 
+            Curve.DataPropertyName = "Curve";
             Curve.HeaderText = "Curva";
             Curve.Name = "Curve";
             // 
             // CurveForm
             // 
+            CurveForm.DataPropertyName = "CurveForm";
             CurveForm.HeaderText = "Forma";
             CurveForm.Name = "CurveForm";
             CurveForm.Width = 60;
             // 
             // XTalk
             // 
+            XTalk.DataPropertyName = "XTalk";
             XTalk.HeaderText = "Isolamento";
             XTalk.Name = "XTalk";
             XTalk.Width = 70;
             // 
             // XTalkGroup
             // 
+            XTalkGroup.DataPropertyName = "XTalkGroup";
             XTalkGroup.HeaderText = "Grupo";
             XTalkGroup.Name = "XTalkGroup";
             XTalkGroup.Width = 80;
             // 
             // Channel
             // 
+            Channel.DataPropertyName = "Channel";
             Channel.HeaderText = "Canal";
             Channel.Name = "Channel";
             Channel.Width = 60;
             // 
             // Gain
             // 
+            Gain.DataPropertyName = "Gain";
             Gain.HeaderText = "Ganho";
             Gain.Name = "Gain";
             Gain.Width = 60;
@@ -226,6 +242,7 @@
             EEPROMReadButton.TabIndex = 2;
             EEPROMReadButton.Text = "Ler dados do Arduino";
             EEPROMReadButton.UseVisualStyleBackColor = true;
+            EEPROMReadButton.Click += EEPROMReadButton_Click;
             // 
             // MonitorGroupBox
             // 
@@ -302,7 +319,7 @@
             ConnectionGroupBox.ResumeLayout(false);
             ConnectionGroupBox.PerformLayout();
             PadsTableGroupBox.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
+            ((System.ComponentModel.ISupportInitialize)PadsGridView).EndInit();
             MonitorGroupBox.ResumeLayout(false);
             MonitorGroupBox.PerformLayout();
             ResumeLayout(false);
@@ -317,13 +334,14 @@
         private Label MidiDevicesComboBoxLabel;
         private CheckBox ConnectCheckBox;
         private GroupBox PadsTableGroupBox;
-        private DataGridView dataGridView1;
+        private DataGridView PadsGridView;
         private Button EEPROMReadButton;
         private GroupBox MonitorGroupBox;
         private Label MidiMonitorLabel;
         private RichTextBox MidiMonitorRichText;
         private Button MidiMonitorClearButton;
         private Label HHCProgressBarLabel;
+        private DyDrums.Views.HHCVerticalProgressBar HHCVerticalProgressBar;
         private DataGridViewTextBoxColumn Type;
         private DataGridViewTextBoxColumn PadName;
         private DataGridViewTextBoxColumn Note;
@@ -337,6 +355,5 @@
         private DataGridViewTextBoxColumn XTalkGroup;
         private DataGridViewTextBoxColumn Channel;
         private DataGridViewTextBoxColumn Gain;
-        private DyDrums.Views.HHCVerticalProgressBar HHCVerticalProgressBar;
     }
 }

@@ -11,10 +11,10 @@ namespace DyDrums.Controllers
         public event Action<int, int, int> MidiMessageReceived;
         public event Action<int>? HHCVelocityReceived;
 
-        public SerialController(MainForm mainform)
+        public SerialController(MainForm mainform, SerialManager serialManager)
         {
             _mainForm = mainform;
-            _serialManager = new SerialManager();
+            _serialManager = serialManager;
             _serialManager.MidiMessageReceived += (ch, d1, d2) =>
             {
                 MidiMessageReceived?.Invoke(ch, d1, d2); // repassa
@@ -44,6 +44,11 @@ namespace DyDrums.Controllers
             _serialManager.Disconnect();
         }
 
+        public async Task ConnectToPortAsync(string portName)
+        {
+            _serialManager.Connect(portName);           // ← Usa o seu método premium
+            await _serialManager.HandshakeAsync();      // ← Manda o Sysex depois
+        }
 
     }
 }

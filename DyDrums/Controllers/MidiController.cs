@@ -7,7 +7,7 @@ namespace DyDrums.Controllers
         private MidiManager _midiManager;
         private readonly MainForm _mainForm;
 
-        public MidiController(MainForm mainform)
+        public MidiController(MainForm mainform, MidiManager midiManager)
         {
             _mainForm = mainform;
             _midiManager = new MidiManager();
