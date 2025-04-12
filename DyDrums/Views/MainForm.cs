@@ -31,6 +31,7 @@ namespace DyDrums
             ConnectCheckBox.Size = new Size(100, 40);
 
             _serialController.MidiMessageReceived += OnMidiMessageReceived;
+            _serialController.HHCVelocityReceived += UpdateHHCBar;
 
             Debug.WriteLine("Inscrito no evento MIDI!");
             _serialController.GetCOMPorts();
@@ -131,11 +132,23 @@ namespace DyDrums
                     _midiManager.PlayNoteSafe(note, velocity, 20, channel);
                 });
 
-                //// Atualiza barra de Hi-Hat (nota 4 por padrão)
-                //if (note == 4)
-                //{
-                //    HHCVerticalProgressBar.Value = Math.Min(velocity, HHCVerticalProgressBar.Maximum);
-                //}
+                // Atualiza barra de Hi-Hat (nota 4 por padrão)
+                if (note == 4)
+                {
+                    HHCVerticalProgressBar.BarColor = Color.DeepSkyBlue;
+                    HHCVerticalProgressBar.Value = 84;
+                    HHCVerticalProgressBar.Value = Math.Min(velocity, HHCVerticalProgressBar.Maximum);
+                }
+            });
+        }
+
+        private void UpdateHHCBar(int value)
+        {
+            BeginInvoke(() =>
+            {
+                int max = HHCVerticalProgressBar.Maximum;
+                int invertedValue = max - value;
+                HHCVerticalProgressBar.Value = Math.Max(HHCVerticalProgressBar.Minimum, invertedValue);
             });
         }
     }

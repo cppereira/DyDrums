@@ -9,7 +9,12 @@ namespace DyDrums.Services
         private MainForm _mainForm;
         private List<byte> currentSysex = new();
         private static List<byte[]> fullSysexMessages = new();
+
+        //Events
         public event Action<int, int, int>? MidiMessageReceived;
+        public event Action<int>? HHCVelocityReceived;
+
+
         public SerialManager() { }
 
         public void Connect(string portName, int baudRate = 115200)
@@ -107,18 +112,7 @@ namespace DyDrums.Services
 
                             if (data1 == 4)
                             {
-                                //MidiManager.Instance.SendControlChange(channel, 4, data2);
-
-
-                                //MainForm.Instance?.Invoke(() =>
-                                //{
-                                //    if (MainForm.Instance.HHCVerticalProgressBar != null)
-                                //    {
-                                //        int max = MainForm.Instance.HHCVerticalProgressBar.Maximum;
-                                //        int invertedValue = max - data2;
-                                //        MainForm.Instance.HHCVerticalProgressBar.Value = Math.Max(MainForm.Instance.HHCVerticalProgressBar.Minimum, invertedValue);
-                                //    }
-                                //}); ;
+                                HHCVelocityReceived?.Invoke(data2);
                             }
                             else
                             {

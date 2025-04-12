@@ -51,6 +51,7 @@
             Gain = new DataGridViewTextBoxColumn();
             EEPROMReadButton = new Button();
             MonitorGroupBox = new GroupBox();
+            HHCVerticalProgressBar = new DyDrums.Views.HHCVerticalProgressBar();
             HHCProgressBarLabel = new Label();
             MidiMonitorClearButton = new Button();
             MidiMonitorLabel = new Label();
@@ -77,8 +78,7 @@
             // 
             // ConnectCheckBox
             // 
-            ConnectCheckBox.AutoSize = true;
-            ConnectCheckBox.Location = new Point(756, 35);
+            ConnectCheckBox.Location = new Point(772, 23);
             ConnectCheckBox.Name = "ConnectCheckBox";
             ConnectCheckBox.Size = new Size(74, 19);
             ConnectCheckBox.TabIndex = 5;
@@ -229,6 +229,7 @@
             // 
             // MonitorGroupBox
             // 
+            MonitorGroupBox.Controls.Add(HHCVerticalProgressBar);
             MonitorGroupBox.Controls.Add(HHCProgressBarLabel);
             MonitorGroupBox.Controls.Add(MidiMonitorClearButton);
             MonitorGroupBox.Controls.Add(MidiMonitorLabel);
@@ -240,10 +241,18 @@
             MonitorGroupBox.TabStop = false;
             MonitorGroupBox.Text = "Monitor";
             // 
+            // HHCVerticalProgressBar
+            // 
+            HHCVerticalProgressBar.BarColor = Color.Aquamarine;
+            HHCVerticalProgressBar.Location = new Point(301, 43);
+            HHCVerticalProgressBar.Name = "HHCVerticalProgressBar";
+            HHCVerticalProgressBar.Size = new Size(14, 477);
+            HHCVerticalProgressBar.TabIndex = 8;
+            // 
             // HHCProgressBarLabel
             // 
             HHCProgressBarLabel.AutoSize = true;
-            HHCProgressBarLabel.Location = new Point(289, 19);
+            HHCProgressBarLabel.Location = new Point(292, 19);
             HHCProgressBarLabel.Name = "HHCProgressBarLabel";
             HHCProgressBarLabel.Size = new Size(36, 15);
             HHCProgressBarLabel.TabIndex = 7;
@@ -328,5 +337,6 @@
         private DataGridViewTextBoxColumn XTalkGroup;
         private DataGridViewTextBoxColumn Channel;
         private DataGridViewTextBoxColumn Gain;
+        private DyDrums.Views.HHCVerticalProgressBar HHCVerticalProgressBar;
     }
 }

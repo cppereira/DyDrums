@@ -9,6 +9,7 @@ namespace DyDrums.Controllers
 
         private readonly MainForm _mainForm;
         public event Action<int, int, int> MidiMessageReceived;
+        public event Action<int>? HHCVelocityReceived;
 
         public SerialController(MainForm mainform)
         {
@@ -17,6 +18,13 @@ namespace DyDrums.Controllers
             _serialManager.MidiMessageReceived += (ch, d1, d2) =>
             {
                 MidiMessageReceived?.Invoke(ch, d1, d2); // repassa
+            };
+
+
+
+            _serialManager.HHCVelocityReceived += (velocity) =>
+            {
+                HHCVelocityReceived?.Invoke(velocity); // Repassa pra View
             };
         }
 
