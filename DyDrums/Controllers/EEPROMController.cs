@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using DyDrums.Services;
+﻿using DyDrums.Services;
 
 namespace DyDrums.Controllers
 {
@@ -14,17 +13,6 @@ namespace DyDrums.Controllers
             _eepromManager = eepromManager;
             _padManager = padManager;
             _view = view;
-        }
-
-        public void HandleSysexMessages(List<byte[]> messages)
-        {
-            Debug.WriteLine("Sysex recebido!"); // ← A prova de vida!
-
-            _padManager.ProcessSysex(messages); // Parse e atualização dos Pads
-            _view.Invoke(() =>
-            {
-                _view.RefreshPadGrid(); // Atualiza a interface
-            });
         }
     }
 }

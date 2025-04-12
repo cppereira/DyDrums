@@ -15,12 +15,10 @@ namespace DyDrums.Controllers
         {
             _mainForm = mainform;
             _serialManager = serialManager;
-            _serialManager.MidiMessageReceived += (ch, d1, d2) =>
+            _serialManager.MidiMessageReceived += (channel, data1, data2) =>
             {
-                MidiMessageReceived?.Invoke(ch, d1, d2); // repassa
+                MidiMessageReceived?.Invoke(channel, data1, data2); // repassa
             };
-
-
 
             _serialManager.HHCVelocityReceived += (velocity) =>
             {

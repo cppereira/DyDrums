@@ -33,11 +33,6 @@ namespace DyDrums
                 Invoke(() => RefreshPadGrid(pads));
             };
 
-            _serialManager.SysexBatchReceived += (sysexList) =>
-            {
-                _padManager.ProcessSysex(sysexList);
-            };
-
             _midiController.HHCValueReceived += OnHHCValueReceived;
 
         }
@@ -64,7 +59,6 @@ namespace DyDrums
             _serialController = new SerialController(this, _serialManager);
             _eepromController = new EEPROMController(_eepromManager, _padManager, this);
 
-            _serialManager.SysexBatchReceived += _eepromController.HandleSysexMessages;
 
         }
 
@@ -289,14 +283,7 @@ namespace DyDrums
 
         private void EEPROMReadButton_Click(object sender, EventArgs e)
         {
-            if (!_serialManager.IsConnected)
-            {
-                MessageBox.Show("Conecte-se a uma porta primeiro.");
-                return;
-            }
-
-            _padManager.ResetSysexProcessing();     // Limpa estado
-            _serialManager.Handshake();             // Direto, sem esperar
+            MessageBox.Show("Botão não faz nada ainda...");
         }
 
         private void MidiMonitorClearButton_Click(object sender, EventArgs e)

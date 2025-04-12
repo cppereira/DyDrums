@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Text.Json;
+﻿using System.Text.Json;
 using DyDrums.Models;
 using DyDrums.Services;
 
@@ -35,7 +34,7 @@ public class PadManager
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[PadManager] Erro ao carregar JSON: {ex.Message}");
+            //Debug.WriteLine($"[PadManager] Erro ao carregar JSON: {ex.Message}");
             CreateDefaultPads();
             SavePads();
         }
@@ -45,6 +44,7 @@ public class PadManager
     {
         try
         {
+            MessageBox.Show(Pads.Count().ToString());
             string json = JsonSerializer.Serialize(Pads, new JsonSerializerOptions
             {
                 WriteIndented = true
@@ -54,7 +54,7 @@ public class PadManager
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[PadManager] Erro ao salvar JSON: {ex.Message}");
+            //Debug.WriteLine($"[PadManager] Erro ao salvar JSON: {ex.Message}");
         }
     }
 
@@ -67,7 +67,7 @@ public class PadManager
             {
                 Pin = i,
                 Type = 0,
-                PadName = $"Pad {i + 1}", // assumindo que a propriedade é Name, não PadName
+                Name = $"Pad {i + 1}", // assumindo que a propriedade é Name, não PadName
                 Note = 0,
                 Threshold = 0,
                 ScanTime = 0,
@@ -83,74 +83,10 @@ public class PadManager
         }
     }
 
-    public void ResetSysexProcessing()
-    {
-        _alreadyProcessed = false;
-    }
 
-    public void ProcessSysex(List<byte[]> messages)
-    {
-        _receivedMessages.AddRange(messages);
-
-        // Verifica se a última mensagem indica o fim da transmissão
-        if (_alreadyProcessed || !_receivedMessages.Any(m => IsEndMessage(m)))
-        {
-            return;
-        }
-
-        _alreadyProcessed = true;
-
-        var pads = _eepromManager.ParseSysex(_receivedMessages);
-
-        // Remove pads inválidos ou fantasmas
-        pads = pads
-            .Where(p => p != null && p.Pin >= 0 && p.Pin < 15)
-            .ToList();
-
-        //// Tenta manter os nomes antigos, se houver
-        //var existingPads = configManager.LoadFromFile();
-        //foreach (var pad in pads)
-        //{
-        //    var match = existingPads.FirstOrDefault(p => p.Pin == pad.Pin);
-        //    if (match != null)
-        //    {
-        //        pad.Name = match.Name;
-        //    }
-        //}
-        LoadConfigs(pads);
-        SavePads();
-        PadsUpdated?.Invoke(Pads);
-        _receivedMessages.Clear();
-    }
-
-
-
-
-    private List<Pad> LoadFromDisk()
-    {
-        if (!File.Exists(_configPath)) return new List<Pad>();
-        string json = File.ReadAllText(_configPath);
-        return JsonSerializer.Deserialize<List<Pad>>(json) ?? new List<Pad>();
-    }
-
-    public void LoadConfigs(List<Pad> newPads)
-    {
-        Pads = newPads;
-    }
 
     // Você pode adicionar esse método se quiser externar o path
     public string GetConfigPath() => _configPath;
 
-    // Stub provisório pra compilar — você pode implementar sua lógica
-    private bool IsEndMessage(byte[] message)
-    {
-        return message.Length == 7 &&
-               message[0] == 0xF0 &&
-               message[1] == 0x77 &&
-               message[2] == 0x02 &&
-               message[3] == 0x7F &&
-               message[4] == 0x7F &&
-               message[5] == 0x7F &&
-               message[6] == 0xF7;
-    }
+
 }
