@@ -8,7 +8,6 @@ namespace DyDrums
 {
     public partial class MainForm : Form, IMainFormView
     {
-
         private SerialController _serialController;
         private MidiController _midiController;
         private SerialManager _serialManager;
@@ -17,22 +16,13 @@ namespace DyDrums
         private EEPROMManager _eepromManager;
         private EEPROMController _eepromController;
 
-        public void SetMidiController(MidiController controller)
-        {
-            _midiController = controller ?? throw new ArgumentNullException(nameof(controller));
-        }
-
         public MainForm()
 
         {
             InitializeComponent();
             InitializeManagersAndControllers();
 
-            _padManager.PadsUpdated += (pads) =>
-            {
-                Invoke(() => RefreshPadGrid(pads));
-            };
-
+            // HHC controller 
             _midiController.HHCValueReceived += OnHHCValueReceived;
 
         }
@@ -62,11 +52,6 @@ namespace DyDrums
 
         }
 
-        private void RefreshPadGrid(List<Pad> pads)
-        {
-            PadsGridView.DataSource = new BindingList<Pad>(pads);
-        }
-
         private void SetupConnectCheckBox()
         {
             ConnectCheckBox.Appearance = Appearance.Button;
@@ -91,8 +76,6 @@ namespace DyDrums
             PadsGridView.DataSource = new BindingList<Pad>(_padManager.Pads);
         }
 
-
-
         private void OnHHCValueReceived(int data2)
         {
             if (InvokeRequired)
@@ -115,21 +98,6 @@ namespace DyDrums
             }
         }
 
-
-
-
-
-
-
-
-
-
-
-        public void RefreshPadGrid()
-        {
-            PadsGridView.DataSource = new BindingList<Pad>(_padManager.Pads);
-        }
-
         private void PopulateGrid()
         {
             var bindingList = new BindingList<Pad>(_padManager.Pads);
@@ -142,16 +110,9 @@ namespace DyDrums
             {
                 PadsGridView.Columns["Pin"].Visible = false;
             }
-
             //PadsGridView.Columns["CurveForm"].HeaderText = "Curve Form";
             //PadsGridView.Columns["XtalkGroup"].HeaderText = "Xtalk Group";
         }
-
-        private void PadsGridView_CellValueChanged(object sender, DataGridViewCellEventArgs e)
-        {
-            _padManager.SavePads(); // salva automático quando editar algo
-        }
-
 
         public void UpdateCOMPortsComboBox(string[] ports)
         {
@@ -219,7 +180,6 @@ namespace DyDrums
 
             }
         }
-
         private void OnMidiMessageReceived(int channel, int note, int velocity)
         {
             this.Invoke(() =>

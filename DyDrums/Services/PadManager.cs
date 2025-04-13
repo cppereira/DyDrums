@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics;
+using System.Text.Json;
 using DyDrums.Models;
 using DyDrums.Services;
 
@@ -9,8 +10,7 @@ public class PadManager
     private readonly EEPROMManager _eepromManager;
 
     public List<Pad> Pads { get; private set; } = new();
-    private List<byte[]> _receivedMessages = new();
-    private bool _alreadyProcessed = false;
+
 
     public PadManager(SerialManager serialManager)
     {
@@ -34,7 +34,7 @@ public class PadManager
         }
         catch (Exception ex)
         {
-            //Debug.WriteLine($"[PadManager] Erro ao carregar JSON: {ex.Message}");
+            Debug.WriteLine($"[PadManager] Erro ao carregar JSON: {ex.Message}");
             CreateDefaultPads();
             SavePads();
         }
@@ -44,7 +44,6 @@ public class PadManager
     {
         try
         {
-            MessageBox.Show(Pads.Count().ToString());
             string json = JsonSerializer.Serialize(Pads, new JsonSerializerOptions
             {
                 WriteIndented = true

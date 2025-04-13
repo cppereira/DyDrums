@@ -5,13 +5,6 @@ namespace DyDrums.Services
 {
     public class SerialManager
     {
-        private List<byte> _currentSysex = new();
-        private List<byte[]> _fullSysexMessages = new();
-        private bool _isClosing = false; // se ainda não adicionou
-
-        public bool IsConnected => _serialPort != null && _serialPort.IsOpen;
-
-
         private SerialPort _serialPort;
         private MainForm _mainForm;
         private MidiController _midiController;
