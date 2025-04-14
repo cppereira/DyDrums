@@ -36,13 +36,6 @@
             COMPortsComboBox = new ComboBox();
             PadsTableGroupBox = new GroupBox();
             PadsGridView = new DataGridView();
-            EEPROMReadButton = new Button();
-            MonitorGroupBox = new GroupBox();
-            HHCVerticalProgressBar = new DyDrums.Views.HHCVerticalProgressBar();
-            HHCProgressBarLabel = new Label();
-            MidiMonitorClearButton = new Button();
-            MidiMonitorLabel = new Label();
-            MidiMonitorRichText = new RichTextBox();
             ID = new DataGridViewTextBoxColumn();
             Type = new DataGridViewTextBoxColumn();
             PadName = new DataGridViewTextBoxColumn();
@@ -57,6 +50,13 @@
             XTalkGroup = new DataGridViewTextBoxColumn();
             Channel = new DataGridViewTextBoxColumn();
             Gain = new DataGridViewTextBoxColumn();
+            EEPROMReadButton = new Button();
+            MonitorGroupBox = new GroupBox();
+            HHCVerticalProgressBar = new DyDrums.Views.HHCVerticalProgressBar();
+            HHCProgressBarLabel = new Label();
+            MidiMonitorClearButton = new Button();
+            MidiMonitorLabel = new Label();
+            MidiMonitorRichText = new RichTextBox();
             ConnectionGroupBox.SuspendLayout();
             PadsTableGroupBox.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)PadsGridView).BeginInit();
@@ -139,81 +139,11 @@
             PadsGridView.AllowUserToResizeRows = false;
             PadsGridView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             PadsGridView.Columns.AddRange(new DataGridViewColumn[] { ID, Type, PadName, Note, Threshold, ScanTime, MaskTime, Retrigger, Curve, CurveForm, XTalk, XTalkGroup, Channel, Gain });
+            PadsGridView.Enabled = false;
             PadsGridView.Location = new Point(10, 30);
             PadsGridView.Name = "PadsGridView";
             PadsGridView.Size = new Size(955, 416);
             PadsGridView.TabIndex = 0;
-            // 
-            // EEPROMReadButton
-            // 
-            EEPROMReadButton.Enabled = false;
-            EEPROMReadButton.Location = new Point(349, 104);
-            EEPROMReadButton.Name = "EEPROMReadButton";
-            EEPROMReadButton.Size = new Size(233, 39);
-            EEPROMReadButton.TabIndex = 2;
-            EEPROMReadButton.Text = "Ler dados do Arduino";
-            EEPROMReadButton.UseVisualStyleBackColor = true;
-            EEPROMReadButton.Click += EEPROMReadButton_Click;
-            // 
-            // MonitorGroupBox
-            // 
-            MonitorGroupBox.Controls.Add(HHCVerticalProgressBar);
-            MonitorGroupBox.Controls.Add(HHCProgressBarLabel);
-            MonitorGroupBox.Controls.Add(MidiMonitorClearButton);
-            MonitorGroupBox.Controls.Add(MidiMonitorLabel);
-            MonitorGroupBox.Controls.Add(MidiMonitorRichText);
-            MonitorGroupBox.Location = new Point(6, 12);
-            MonitorGroupBox.Name = "MonitorGroupBox";
-            MonitorGroupBox.Size = new Size(337, 587);
-            MonitorGroupBox.TabIndex = 3;
-            MonitorGroupBox.TabStop = false;
-            MonitorGroupBox.Text = "Monitor";
-            // 
-            // HHCVerticalProgressBar
-            // 
-            HHCVerticalProgressBar.BarColor = Color.Aquamarine;
-            HHCVerticalProgressBar.Location = new Point(310, 43);
-            HHCVerticalProgressBar.Name = "HHCVerticalProgressBar";
-            HHCVerticalProgressBar.Size = new Size(14, 477);
-            HHCVerticalProgressBar.TabIndex = 8;
-            // 
-            // HHCProgressBarLabel
-            // 
-            HHCProgressBarLabel.AutoSize = true;
-            HHCProgressBarLabel.Location = new Point(300, 19);
-            HHCProgressBarLabel.Name = "HHCProgressBarLabel";
-            HHCProgressBarLabel.Size = new Size(36, 15);
-            HHCProgressBarLabel.TabIndex = 7;
-            HHCProgressBarLabel.Text = "HHC:";
-            // 
-            // MidiMonitorClearButton
-            // 
-            MidiMonitorClearButton.Enabled = false;
-            MidiMonitorClearButton.Location = new Point(68, 534);
-            MidiMonitorClearButton.Name = "MidiMonitorClearButton";
-            MidiMonitorClearButton.Size = new Size(179, 39);
-            MidiMonitorClearButton.TabIndex = 4;
-            MidiMonitorClearButton.Text = "Limpar";
-            MidiMonitorClearButton.UseVisualStyleBackColor = true;
-            MidiMonitorClearButton.Click += MidiMonitorClearButton_Click;
-            // 
-            // MidiMonitorLabel
-            // 
-            MidiMonitorLabel.AutoSize = true;
-            MidiMonitorLabel.Location = new Point(85, 19);
-            MidiMonitorLabel.Name = "MidiMonitorLabel";
-            MidiMonitorLabel.Size = new Size(98, 15);
-            MidiMonitorLabel.TabIndex = 6;
-            MidiMonitorLabel.Text = "Mensagens MIDI:";
-            // 
-            // MidiMonitorRichText
-            // 
-            MidiMonitorRichText.Enabled = false;
-            MidiMonitorRichText.Location = new Point(6, 43);
-            MidiMonitorRichText.Name = "MidiMonitorRichText";
-            MidiMonitorRichText.Size = new Size(298, 477);
-            MidiMonitorRichText.TabIndex = 4;
-            MidiMonitorRichText.Text = "";
             // 
             // ID
             // 
@@ -311,6 +241,77 @@
             Gain.HeaderText = "Ganho";
             Gain.Name = "Gain";
             Gain.Width = 60;
+            // 
+            // EEPROMReadButton
+            // 
+            EEPROMReadButton.Enabled = false;
+            EEPROMReadButton.Location = new Point(349, 104);
+            EEPROMReadButton.Name = "EEPROMReadButton";
+            EEPROMReadButton.Size = new Size(233, 39);
+            EEPROMReadButton.TabIndex = 2;
+            EEPROMReadButton.Text = "Ler dados do Arduino";
+            EEPROMReadButton.UseVisualStyleBackColor = true;
+            EEPROMReadButton.Click += EEPROMReadButton_Click;
+            // 
+            // MonitorGroupBox
+            // 
+            MonitorGroupBox.Controls.Add(HHCVerticalProgressBar);
+            MonitorGroupBox.Controls.Add(HHCProgressBarLabel);
+            MonitorGroupBox.Controls.Add(MidiMonitorClearButton);
+            MonitorGroupBox.Controls.Add(MidiMonitorLabel);
+            MonitorGroupBox.Controls.Add(MidiMonitorRichText);
+            MonitorGroupBox.Location = new Point(6, 12);
+            MonitorGroupBox.Name = "MonitorGroupBox";
+            MonitorGroupBox.Size = new Size(337, 587);
+            MonitorGroupBox.TabIndex = 3;
+            MonitorGroupBox.TabStop = false;
+            MonitorGroupBox.Text = "Monitor";
+            // 
+            // HHCVerticalProgressBar
+            // 
+            HHCVerticalProgressBar.BarColor = Color.Aquamarine;
+            HHCVerticalProgressBar.Location = new Point(310, 43);
+            HHCVerticalProgressBar.Name = "HHCVerticalProgressBar";
+            HHCVerticalProgressBar.Size = new Size(14, 477);
+            HHCVerticalProgressBar.TabIndex = 8;
+            // 
+            // HHCProgressBarLabel
+            // 
+            HHCProgressBarLabel.AutoSize = true;
+            HHCProgressBarLabel.Location = new Point(300, 19);
+            HHCProgressBarLabel.Name = "HHCProgressBarLabel";
+            HHCProgressBarLabel.Size = new Size(36, 15);
+            HHCProgressBarLabel.TabIndex = 7;
+            HHCProgressBarLabel.Text = "HHC:";
+            // 
+            // MidiMonitorClearButton
+            // 
+            MidiMonitorClearButton.Enabled = false;
+            MidiMonitorClearButton.Location = new Point(68, 534);
+            MidiMonitorClearButton.Name = "MidiMonitorClearButton";
+            MidiMonitorClearButton.Size = new Size(179, 39);
+            MidiMonitorClearButton.TabIndex = 4;
+            MidiMonitorClearButton.Text = "Limpar";
+            MidiMonitorClearButton.UseVisualStyleBackColor = true;
+            MidiMonitorClearButton.Click += MidiMonitorClearButton_Click;
+            // 
+            // MidiMonitorLabel
+            // 
+            MidiMonitorLabel.AutoSize = true;
+            MidiMonitorLabel.Location = new Point(85, 19);
+            MidiMonitorLabel.Name = "MidiMonitorLabel";
+            MidiMonitorLabel.Size = new Size(98, 15);
+            MidiMonitorLabel.TabIndex = 6;
+            MidiMonitorLabel.Text = "Mensagens MIDI:";
+            // 
+            // MidiMonitorRichText
+            // 
+            MidiMonitorRichText.Enabled = false;
+            MidiMonitorRichText.Location = new Point(6, 43);
+            MidiMonitorRichText.Name = "MidiMonitorRichText";
+            MidiMonitorRichText.Size = new Size(298, 477);
+            MidiMonitorRichText.TabIndex = 4;
+            MidiMonitorRichText.Text = "";
             // 
             // MainForm
             // 

@@ -23,6 +23,16 @@ namespace DyDrums
 
             // HHC controller 
             _midiController.HHCValueReceived += OnHHCValueReceived;
+
+
+            //Atualizar JSON e Arduino direto da Grid
+            PadsGridView.CellValueChanged += PadsGridView_CellValueChanged;
+            PadsGridView.CellEndEdit += (s, e) =>
+            {
+                if (PadsGridView.IsCurrentCellDirty)
+                    PadsGridView.CommitEdit(DataGridViewDataErrorContexts.Commit);
+            };
+
         }
 
         private void MainForm_Load(object? sender, EventArgs? e)
@@ -138,6 +148,7 @@ namespace DyDrums
             {
                 if (ConnectCheckBox.Checked)
                 {
+                    PadsGridView.Enabled = true;
                     MidiMonitorRichText.Enabled = true;
                     MidiMonitorClearButton.Enabled = true;
                     EEPROMReadButton.Enabled = true;
@@ -171,7 +182,7 @@ namespace DyDrums
             }
             catch
             {
-                MessageBox.Show("ERRO: " + e);
+                MessageBox.Show($"{e}: ", "Erro de conexão", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
         private void OnMidiMessageReceived(int channel, int note, int velocity)
@@ -279,5 +290,51 @@ namespace DyDrums
 
             PadsGridView.DataSource = padsClone;
         }
+
+        private void PadsGridView_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+
+            try
+            {
+                // Atualiza a lista de Pads com base na nova célula editada
+                var pads = new List<Pad>();
+
+                foreach (DataGridViewRow row in PadsGridView.Rows)
+                {
+                    if (row.IsNewRow) continue;
+
+                    var pad = new Pad
+                    {
+                        //Id = Convert.ToInt32(row.Cells["Id"].Value),
+                        Type = Convert.ToInt32(row.Cells["Type"].Value),
+                        Name = row.Cells["PadName"].Value?.ToString(),
+                        Note = Convert.ToInt32(row.Cells["Note"].Value),
+                        Threshold = Convert.ToInt32(row.Cells["Threshold"].Value),
+                        ScanTime = Convert.ToInt32(row.Cells["ScanTime"].Value),
+                        MaskTime = Convert.ToInt32(row.Cells["MaskTime"].Value),
+                        Retrigger = Convert.ToInt32(row.Cells["Retrigger"].Value),
+                        Curve = Convert.ToInt32(row.Cells["Curve"].Value),
+                        CurveForm = Convert.ToInt32(row.Cells["CurveForm"].Value),
+                        Xtalk = Convert.ToInt32(row.Cells["Xtalk"].Value),
+                        XtalkGroup = Convert.ToInt32(row.Cells["XtalkGroup"].Value),
+                        Channel = Convert.ToInt32(row.Cells["Channel"].Value),
+                        Gain = Convert.ToInt32(row.Cells["Gain"].Value),
+                    };
+
+                    pads.Add(pad);
+                }
+
+                // Salva no JSON via PadManager
+                _padManager.SavePads(pads);
+                MessageBox.Show("Alterações salvas com sucesso.", "Atualização da Grid", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"{ex.Message}", "ERRO", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                //MessageBox.Show($"[Grid] Erro ao salvar alterações: {ex.Message}");
+            }
+        }
+
     }
 }

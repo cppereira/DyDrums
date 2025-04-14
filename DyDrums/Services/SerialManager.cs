@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.IO.Ports;
+﻿using System.IO.Ports;
 using DyDrums.Controllers;
 using DyDrums.Models;
 
@@ -22,7 +21,6 @@ namespace DyDrums.Services
         public event Action<int, byte, int> SysExParameterReceived;
 
         private readonly Dictionary<int, Dictionary<byte, byte>> _padParameterCache = new();
-        private readonly int _expectedParamCount = 11; // depende do seu handshake!
         public event Action<Pad> OnPadReceived;
 
         public SerialManager(MidiController midiController)
@@ -55,11 +53,11 @@ namespace DyDrums.Services
             }
             catch (UnauthorizedAccessException ex)
             {
-                MessageBox.Show($"[SerialManager] Porta {portName} está em uso: {ex.Message}");
+                MessageBox.Show($"A porta {portName} está em uso: {ex.Message}", "Erro de conexão", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"[SerialManager] Erro ao abrir porta {portName}: {ex.Message}");
+                MessageBox.Show($"Erro ao abrir a porta {portName}: {ex.Message}", "Erro de conexão", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -79,7 +77,7 @@ namespace DyDrums.Services
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"[SerialManager] Erro ao desconectar: {ex.Message}");
+                    MessageBox.Show($"Erro ao desconectar: {ex.Message}", "Erro de conexão", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -132,17 +130,14 @@ namespace DyDrums.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[Serial] ERRO: {ex.Message}");
+                MessageBox.Show($"Erro: {ex.Message}", "Erro na Porta Serial", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
         }
-
 
         public string[] GetCOMPorts()
         {
             return SerialPort.GetPortNames();
         }
-
 
         public void SendHandshake()
         {
@@ -151,7 +146,7 @@ namespace DyDrums.Services
 
             if (!EnsurePortOpen())
             {
-                Debug.WriteLine("SerialPort não está aberto.");
+                MessageBox.Show($"A Porta Serial não está aberta.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -189,7 +184,6 @@ namespace DyDrums.Services
                     return false;
                 }
             }
-
             return true;
         }
 
