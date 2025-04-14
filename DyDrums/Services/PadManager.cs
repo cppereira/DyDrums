@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Text.Json;
+﻿using System.Text.Json;
 using DyDrums.Models;
 using DyDrums.Services;
 
@@ -34,7 +33,7 @@ public class PadManager
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[PadManager] Erro ao carregar JSON: {ex.Message}");
+            MessageBox.Show($"[PadManager] Erro ao carregar JSON: {ex.Message}");
             CreateDefaultPads();
             SavePads(Pads);
         }
@@ -53,7 +52,7 @@ public class PadManager
         }
         catch (Exception ex)
         {
-            //Debug.WriteLine($"[PadManager] Erro ao salvar JSON: {ex.Message}");
+            MessageBox.Show($"[PadManager] Erro ao salvar JSON: {ex.Message}");
         }
     }
 
@@ -82,9 +81,7 @@ public class PadManager
         }
     }
 
-
-
-    // Você pode adicionar esse método se quiser externar o path
+    // Se quiser externar o path
     public string GetConfigPath() => _configPath;
 
 

@@ -21,8 +21,6 @@ namespace DyDrums.Services
         public event Action<int>? HHCVelocityReceived;
         public event Action<int, byte, int> SysExParameterReceived;
 
-
-
         private readonly Dictionary<int, Dictionary<byte, byte>> _padParameterCache = new();
         private readonly int _expectedParamCount = 11; // depende do seu handshake!
         public event Action<Pad> OnPadReceived;
@@ -43,31 +41,25 @@ namespace DyDrums.Services
 
             try
             {
-                //Debug.WriteLine("[Connect] Chamado para porta " + portName);
-
                 if (_serialPort != null)
                 {
-                    //Debug.WriteLine("[Connect] Fechando porta existente.");
                     _serialPort.DataReceived -= SerialPort_DataReceived;
                     if (_serialPort.IsOpen)
                         _serialPort.Close();
                     _serialPort.Dispose();
                     _serialPort = null;
                 }
-
                 _serialPort = new SerialPort(portName, baudRate);
                 _serialPort.DataReceived += SerialPort_DataReceived;
                 _serialPort.Open();
-
-                //Debug.WriteLine("[Connect] Porta aberta com sucesso.");
             }
             catch (UnauthorizedAccessException ex)
             {
-                //Debug.WriteLine($"[SerialManager] Porta {portName} está em uso: {ex.Message}");
+                MessageBox.Show($"[SerialManager] Porta {portName} está em uso: {ex.Message}");
             }
             catch (Exception ex)
             {
-                //Debug.WriteLine($"[SerialManager] Erro ao abrir porta {portName}: {ex.Message}");
+                MessageBox.Show($"[SerialManager] Erro ao abrir porta {portName}: {ex.Message}");
             }
         }
 
@@ -84,12 +76,10 @@ namespace DyDrums.Services
 
                     _serialPort.Dispose();
                     _serialPort = null;
-
-                    //Debug.WriteLine("[SerialManager] Porta Serial desconectada.");
                 }
                 catch (Exception ex)
                 {
-                    //Debug.WriteLine($"[SerialManager] Erro ao desconectar: {ex.Message}");
+                    MessageBox.Show($"[SerialManager] Erro ao desconectar: {ex.Message}");
                 }
             }
         }
@@ -171,8 +161,7 @@ namespace DyDrums.Services
                 {
                     byte[] sysex = BuildSysExRequest((byte)pad, param);
                     _serialPort.Write(sysex, 0, sysex.Length);
-                    //Debug.WriteLine($"[Handshake] Req -> Pad {pad}, Param {param:X2}");
-                    Thread.Sleep(5); // Esse valor pode ser ajustado depois
+                    Thread.Sleep(5); // Em todos os testes, este valor foi o mais performático. (0 = tartaruga, 50 = erro)
                 }
             }
 
@@ -194,11 +183,9 @@ namespace DyDrums.Services
                 try
                 {
                     _serialPort.Open();
-                    Debug.WriteLine("[SerialManager] Porta aberta dinamicamente.");
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine("[SerialManager] Falha ao abrir: " + ex.Message);
                     return false;
                 }
             }
@@ -213,22 +200,18 @@ namespace DyDrums.Services
             int value = data[5];
             if (padIndex < 0 || padIndex > 14)
             {
-                //Debug.WriteLine($"[SysEx] Ignorado: PAD {padIndex}");
                 return;
             }
             if (data == null || data.Length < 7)
             {
-                //Debug.WriteLine("[SysEx] Mensagem inválida ou incompleta.");
                 return;
             }
 
             // Formato esperado: F0 77 02 <PAD_INDEX> <PARAM_ID> <VALUE> F7
             if (data[0] != 0xF0 || data[1] != 0x77 || data[2] != 0x02 || data[^1] != 0xF7)
             {
-                //Debug.WriteLine("[SysEx] Formato inesperado.");
                 return;
             }
-            //Debug.WriteLine($"[SysEx] PAD {padIndex} | PARAM {paramId} | VALUE {value}");
 
             // Aciona o evento para notificar o SerialController
             SysExParameterReceived?.Invoke(padIndex, paramId, value);

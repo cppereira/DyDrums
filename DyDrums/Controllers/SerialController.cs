@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using DyDrums.Models;
+﻿using DyDrums.Models;
 using DyDrums.Services;
 
 namespace DyDrums.Controllers
@@ -32,14 +31,12 @@ namespace DyDrums.Controllers
                 HHCVelocityReceived?.Invoke(velocity); // Repassa pra View
             };
 
+            _serialManager.SysExParameterReceived += HandleSysExParameter;
+
             _serialManager.OnPadReceived += pad =>
             {
                 _padList[pad.Id] = pad;
-                //_mainForm.UpdateGrid(_padList.Values.Cast<Pad>().ToList());
             };
-
-            _serialManager.SysExParameterReceived += HandleSysExParameter;
-
         }
 
         private void HandleSysExParameter(int padIndex, byte paramId, int value)
@@ -56,19 +53,19 @@ namespace DyDrums.Controllers
                 var pad = PadFactory.FromParameters(padIndex, _padParameterCache[padIndex]);
                 _padList[pad.Id] = pad;
 
-                Debug.WriteLine($"[Pad COMPLETO] PAD {padIndex} adicionado ao _padList.");
-
                 // Se já coletamos os 15 pads
                 if (_padList.Count == 15)
                 {
-                    Debug.WriteLine("[PadManager] Todos os pads lidos. Atualizando Grid e salvando JSON.");
 
-                    //_mainForm.UpdateGrid(_padList.Values.ToList());
+                    //Atualiza a Grid primeiro
+                    _mainForm.BeginInvoke(() =>
+                    {
+                        _mainForm.UpdateGrid(_padList.Values.Cast<Pad>().ToList()); // UI async-friendly
+                    });
+                    //Depois grava arquivo, para evitar lag na UI
                     _padManager.SavePads(_padList.Values.ToList());
-                    //_padManager.LoadPads();
                 }
             }
-
         }
 
         public void GetCOMPorts()

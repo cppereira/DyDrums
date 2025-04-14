@@ -11,8 +11,6 @@ namespace DyDrums.Services
         public event Action<int, int, int>? MidiMessageReceived;
         public event Action<int>? HHCValueReceived;
 
-
-
         public List<MidiDevice> GetMidiDevices()
         {
             var devices = new List<MidiDevice>();

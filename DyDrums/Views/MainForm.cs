@@ -17,14 +17,12 @@ namespace DyDrums
         private EEPROMController _eepromController;
 
         public MainForm()
-
         {
             InitializeComponent();
             InitializeManagersAndControllers();
 
             // HHC controller 
             _midiController.HHCValueReceived += OnHHCValueReceived;
-
         }
 
         private void MainForm_Load(object? sender, EventArgs? e)
@@ -48,8 +46,6 @@ namespace DyDrums
 
             _serialController = new SerialController(this, _serialManager);
             _eepromController = new EEPROMController(_eepromManager, _padManager, this);
-
-
         }
 
         private void SetupConnectCheckBox()
@@ -66,7 +62,7 @@ namespace DyDrums
             _serialController.HHCVelocityReceived += UpdateHHCBar;
         }
 
-        private void LoadInitialData()
+        public void LoadInitialData()
         {
             _serialController.GetCOMPorts();
             _midiController.GetMidiDevices();
@@ -102,7 +98,7 @@ namespace DyDrums
         {
             var bindingList = new BindingList<Pad>(_padManager.Pads);
             var source = new BindingSource(bindingList, null);
-            PadsGridView.AutoGenerateColumns = true;
+            PadsGridView.AutoGenerateColumns = false;
             PadsGridView.DataSource = source;
 
             // Se quiser esconder ou renomear colunas:            
@@ -110,8 +106,6 @@ namespace DyDrums
             {
                 PadsGridView.Columns["Id"].Visible = false;
             }
-            //PadsGridView.Columns["CurveForm"].HeaderText = "Curve Form";
-            //PadsGridView.Columns["XtalkGroup"].HeaderText = "Xtalk Group";
         }
 
         public void UpdateCOMPortsComboBox(string[] ports)
@@ -172,12 +166,12 @@ namespace DyDrums
                     EEPROMReadButton.Enabled = false;
                     ConnectCheckBox.Text = "Conectar";
                     _serialController.Disconnect();
-                    //_midiManager.Disconnect();
+                    _midiManager.Disconnect();
                 }
             }
             catch
             {
-
+                MessageBox.Show("ERRO: " + e);
             }
         }
         private void OnMidiMessageReceived(int channel, int note, int velocity)
@@ -253,29 +247,37 @@ namespace DyDrums
 
         public void UpdateGrid(List<Pad> pads)
         {
-            PadsGridView.Rows.Clear();
-
-            foreach (var pad in pads)
+            if (PadsGridView.InvokeRequired)
             {
-                PadsGridView.Rows.Add(
-                    pad.Id,
-                    pad.Type,
-                    pad.Name,
-                    pad.Note,
-                    pad.Threshold,
-                    pad.ScanTime,
-                    pad.MaskTime,
-                    pad.Retrigger,
-                    pad.Curve,
-                    pad.CurveForm,
-                    pad.Xtalk,
-                    pad.XtalkGroup,
-                    pad.Channel,
-                    pad.Gain
-                );
+                PadsGridView.Invoke(new Action(() => UpdateGrid(pads)));
+                return;
             }
+
+            // Solução definitiva para erro de DataSource mal resolvido
+            PadsGridView.DataSource = null;
+            PadsGridView.Rows.Clear(); // limpa tudo
+            PadsGridView.Refresh(); // força a UI a perceber a mudança
+
+            // Clona a lista se ela vier de um binding anterior
+            var padsClone = pads.Select(p => new Pad
+            {
+                Id = p.Id,
+                Type = p.Type,
+                Name = p.Name,
+                Note = p.Note,
+                Threshold = p.Threshold,
+                ScanTime = p.ScanTime,
+                MaskTime = p.MaskTime,
+                Retrigger = p.Retrigger,
+                Curve = p.Curve,
+                CurveForm = p.CurveForm,
+                Xtalk = p.Xtalk,
+                XtalkGroup = p.XtalkGroup,
+                Channel = p.Channel,
+                Gain = p.Gain
+            }).ToList();
+
+            PadsGridView.DataSource = padsClone;
         }
-
-
     }
 }
