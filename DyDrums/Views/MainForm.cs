@@ -102,13 +102,13 @@ namespace DyDrums
         {
             var bindingList = new BindingList<Pad>(_padManager.Pads);
             var source = new BindingSource(bindingList, null);
-            PadsGridView.AutoGenerateColumns = false;
+            PadsGridView.AutoGenerateColumns = true;
             PadsGridView.DataSource = source;
 
             // Se quiser esconder ou renomear colunas:            
-            if (PadsGridView.Columns.Contains("Pin"))
+            if (PadsGridView.Columns.Contains("Id"))
             {
-                PadsGridView.Columns["Pin"].Visible = false;
+                PadsGridView.Columns["Id"].Visible = false;
             }
             //PadsGridView.Columns["CurveForm"].HeaderText = "Curve Form";
             //PadsGridView.Columns["XtalkGroup"].HeaderText = "Xtalk Group";
@@ -243,12 +243,39 @@ namespace DyDrums
 
         private void EEPROMReadButton_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Botão não faz nada ainda...");
+            _serialController?.StartHandshake();
         }
 
         private void MidiMonitorClearButton_Click(object sender, EventArgs e)
         {
             MidiMonitorRichText.Clear();
         }
+
+        public void UpdateGrid(List<Pad> pads)
+        {
+            PadsGridView.Rows.Clear();
+
+            foreach (var pad in pads)
+            {
+                PadsGridView.Rows.Add(
+                    pad.Id,
+                    pad.Type,
+                    pad.Name,
+                    pad.Note,
+                    pad.Threshold,
+                    pad.ScanTime,
+                    pad.MaskTime,
+                    pad.Retrigger,
+                    pad.Curve,
+                    pad.CurveForm,
+                    pad.Xtalk,
+                    pad.XtalkGroup,
+                    pad.Channel,
+                    pad.Gain
+                );
+            }
+        }
+
+
     }
 }

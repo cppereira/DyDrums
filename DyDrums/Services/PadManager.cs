@@ -22,7 +22,7 @@ public class PadManager
         if (!File.Exists(_configPath))
         {
             CreateDefaultPads();
-            SavePads();
+            SavePads(Pads);
             return;
         }
 
@@ -36,11 +36,11 @@ public class PadManager
         {
             Debug.WriteLine($"[PadManager] Erro ao carregar JSON: {ex.Message}");
             CreateDefaultPads();
-            SavePads();
+            SavePads(Pads);
         }
     }
 
-    public void SavePads()
+    public void SavePads(List<Pad> Pads)
     {
         try
         {
@@ -64,7 +64,7 @@ public class PadManager
         {
             Pads.Add(new Pad
             {
-                Pin = i,
+
                 Type = 0,
                 Name = $"Pad {i + 1}", // assumindo que a propriedade é Name, não PadName
                 Note = 0,

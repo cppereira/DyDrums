@@ -1,5 +1,7 @@
-﻿using System.IO.Ports;
+﻿using System.Diagnostics;
+using System.IO.Ports;
 using DyDrums.Controllers;
+using DyDrums.Models;
 
 namespace DyDrums.Services
 {
@@ -11,10 +13,19 @@ namespace DyDrums.Services
 
         public event Action<List<byte[]>>? SysexBatchReceived;
 
+        //Lists
+        private List<byte> _sysexBuffer = new();
+
         //Events
         public event Action<int, int, int>? MidiMessageReceived;
         public event Action<int>? HHCVelocityReceived;
+        public event Action<int, byte, int> SysExParameterReceived;
 
+
+
+        private readonly Dictionary<int, Dictionary<byte, byte>> _padParameterCache = new();
+        private readonly int _expectedParamCount = 11; // depende do seu handshake!
+        public event Action<Pad> OnPadReceived;
 
         public SerialManager(MidiController midiController)
         {
@@ -86,48 +97,141 @@ namespace DyDrums.Services
         private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             if (_serialPort == null || !_serialPort.IsOpen) return;
+
             try
             {
                 while (_serialPort.BytesToRead > 0)
                 {
                     int b = _serialPort.ReadByte();
 
-                    // Mensagens MIDI simples
-                    if (_serialPort.BytesToRead >= 2)
+                    if (b == 0xF0)
+                    {
+                        _sysexBuffer.Clear();
+                        _sysexBuffer.Add((byte)b);
+
+                        while (_serialPort.BytesToRead > 0)
+                        {
+                            byte nextByte = (byte)_serialPort.ReadByte();
+                            _sysexBuffer.Add(nextByte);
+
+                            if (nextByte == 0xF7) // fim da SysEx
+                            {
+                                ParseSysExMessage(_sysexBuffer.ToArray());
+                                break;
+                            }
+                        }
+                    }
+                    else if ((_serialPort.BytesToRead >= 2) && ((b & 0xF0) == 0x90 || (b & 0xF0) == 0xB0)) // MIDI Messages
                     {
                         int channel = (b & 0x0F) + 1;
                         int data1 = _serialPort.ReadByte();
                         int data2 = _serialPort.ReadByte();
 
-                        //Debug.WriteLine($"[Serial] <<< MIDI - Canal: {channel}, D1: {data1}, D2: {data2}");
-
-                        if (data1 == 4)
+                        if (data1 == 4) // HHC control
                         {
-                            if (_midiController == null)
-                            {
-                                MessageBox.Show("MidiController está como NULL");
-                            }
-                            _midiController.HandleHHCControlChange(channel, data2);
+                            _midiController?.HandleHHCControlChange(channel, data2);
                             HHCVelocityReceived?.Invoke(data2);
                         }
-
                         else
                         {
                             MidiMessageReceived?.Invoke(channel, data1, data2);
                         }
                     }
+                    // else ignore other bytes (realtime messages, noise, etc)
                 }
             }
             catch (Exception ex)
             {
-                //Debug.WriteLine($"[Serial] ERRO: {ex.Message}");
+                Debug.WriteLine($"[Serial] ERRO: {ex.Message}");
             }
+
         }
 
 
         public string[] GetCOMPorts()
         {
             return SerialPort.GetPortNames();
+        }
+
+
+        public void SendHandshake()
+        {
+            const int totalPads = 15;
+            byte[] parameters = new byte[] { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x0D, 0x0E, 0x0F };
+
+            if (!EnsurePortOpen())
+            {
+                Debug.WriteLine("SerialPort não está aberto.");
+                return;
+            }
+
+            for (int pad = 0; pad < totalPads; pad++)
+            {
+                foreach (byte param in parameters)
+                {
+                    byte[] sysex = BuildSysExRequest((byte)pad, param);
+                    _serialPort.Write(sysex, 0, sysex.Length);
+                    //Debug.WriteLine($"[Handshake] Req -> Pad {pad}, Param {param:X2}");
+                    Thread.Sleep(5); // Esse valor pode ser ajustado depois
+                }
+            }
+
+            byte[] endMessage = new byte[] { 0xF0, 0x77, 0x02, 0x7F, 0x7F, 0x7F, 0xF7 };
+            _serialPort.Write(endMessage, 0, endMessage.Length);
+        }
+
+        private byte[] BuildSysExRequest(byte pad, byte param)
+        {
+            return new byte[] { 0xF0, 0x77, 0x02, pad, param, 0x00, 0xF7 };
+        }
+
+        private bool EnsurePortOpen()
+        {
+            if (_serialPort == null) return false;
+
+            if (!_serialPort.IsOpen)
+            {
+                try
+                {
+                    _serialPort.Open();
+                    Debug.WriteLine("[SerialManager] Porta aberta dinamicamente.");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine("[SerialManager] Falha ao abrir: " + ex.Message);
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private void ParseSysExMessage(byte[] data)
+        {
+            int padIndex = data[3];
+            byte paramId = data[4];
+            int value = data[5];
+            if (padIndex < 0 || padIndex > 14)
+            {
+                //Debug.WriteLine($"[SysEx] Ignorado: PAD {padIndex}");
+                return;
+            }
+            if (data == null || data.Length < 7)
+            {
+                //Debug.WriteLine("[SysEx] Mensagem inválida ou incompleta.");
+                return;
+            }
+
+            // Formato esperado: F0 77 02 <PAD_INDEX> <PARAM_ID> <VALUE> F7
+            if (data[0] != 0xF0 || data[1] != 0x77 || data[2] != 0x02 || data[^1] != 0xF7)
+            {
+                //Debug.WriteLine("[SysEx] Formato inesperado.");
+                return;
+            }
+            //Debug.WriteLine($"[SysEx] PAD {padIndex} | PARAM {paramId} | VALUE {value}");
+
+            // Aciona o evento para notificar o SerialController
+            SysExParameterReceived?.Invoke(padIndex, paramId, value);
         }
     }
 }

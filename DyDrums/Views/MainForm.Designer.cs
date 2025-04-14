@@ -43,6 +43,7 @@
             MidiMonitorClearButton = new Button();
             MidiMonitorLabel = new Label();
             MidiMonitorRichText = new RichTextBox();
+            ID = new DataGridViewTextBoxColumn();
             Type = new DataGridViewTextBoxColumn();
             PadName = new DataGridViewTextBoxColumn();
             Note = new DataGridViewTextBoxColumn();
@@ -137,7 +138,7 @@
             PadsGridView.AllowUserToResizeColumns = false;
             PadsGridView.AllowUserToResizeRows = false;
             PadsGridView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            PadsGridView.Columns.AddRange(new DataGridViewColumn[] { Type, PadName, Note, Threshold, ScanTime, MaskTime, Retrigger, Curve, CurveForm, XTalk, XTalkGroup, Channel, Gain });
+            PadsGridView.Columns.AddRange(new DataGridViewColumn[] { ID, Type, PadName, Note, Threshold, ScanTime, MaskTime, Retrigger, Curve, CurveForm, XTalk, XTalkGroup, Channel, Gain });
             PadsGridView.Location = new Point(10, 30);
             PadsGridView.Name = "PadsGridView";
             PadsGridView.Size = new Size(955, 416);
@@ -213,6 +214,13 @@
             MidiMonitorRichText.Size = new Size(298, 477);
             MidiMonitorRichText.TabIndex = 4;
             MidiMonitorRichText.Text = "";
+            // 
+            // ID
+            // 
+            ID.DataPropertyName = "Id";
+            ID.HeaderText = "ID";
+            ID.Name = "ID";
+            ID.Width = 30;
             // 
             // Type
             // 
@@ -343,6 +351,7 @@
         private Button MidiMonitorClearButton;
         private Label HHCProgressBarLabel;
         private DyDrums.Views.HHCVerticalProgressBar HHCVerticalProgressBar;
+        private DataGridViewTextBoxColumn ID;
         private DataGridViewTextBoxColumn Type;
         private DataGridViewTextBoxColumn PadName;
         private DataGridViewTextBoxColumn Note;
