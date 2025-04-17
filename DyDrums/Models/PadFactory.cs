@@ -5,21 +5,21 @@ public static class PadFactory
     {
         return new Pad
         {
-            //Parâmetros lidos do Arduino, não alterar...
-            Id = id,
-            Type = Get(parameters, 0x0D),
-            Name = Get(parameters, 0x0C).ToString(),
+            //Parâmetros correspondentes ao firmware original do Arduino, não alterar...
+            Id = id, // Index/PIN
             Note = Get(parameters, 0x00),
             Threshold = Get(parameters, 0x01),
             ScanTime = Get(parameters, 0x02),
             MaskTime = Get(parameters, 0x03),
             Retrigger = Get(parameters, 0x04),
             Curve = Get(parameters, 0x05),
-            CurveForm = Get(parameters, 0x08),
-            Xtalk = Get(parameters, 0x06),
-            XtalkGroup = Get(parameters, 0x07),
+            CurveForm = Get(parameters, 0x06),
+            Gain = Get(parameters, 0x07),
+            Xtalk = Get(parameters, 0x08),
+            XtalkGroup = Get(parameters, 0x0D),
             Channel = Get(parameters, 0x0E),
-            Gain = Get(parameters, 0x0F)
+            Type = Get(parameters, 0x0F)
+
         };
     }
 

@@ -1,4 +1,5 @@
-﻿using System.IO.Ports;
+﻿using System.Diagnostics;
+using System.IO.Ports;
 using DyDrums.Controllers;
 using DyDrums.Models;
 
@@ -6,11 +7,17 @@ namespace DyDrums.Services
 {
     public class SerialManager
     {
+        //Define o comando para solicitar todos os Pads para o Firmware
+        public const byte CMD_SEND_ALL_PADS = 0x25;
+
+
+
         private SerialPort _serialPort;
         private MainForm _mainForm;
         private MidiController _midiController;
 
         public event Action<List<byte[]>>? SysexBatchReceived;
+        public event Action SysExTransmissionComplete;
 
         //Lists
         private List<byte> _sysexBuffer = new();
@@ -44,12 +51,15 @@ namespace DyDrums.Services
                     _serialPort.DataReceived -= SerialPort_DataReceived;
                     if (_serialPort.IsOpen)
                         _serialPort.Close();
+
                     _serialPort.Dispose();
                     _serialPort = null;
                 }
                 _serialPort = new SerialPort(portName, baudRate);
                 _serialPort.DataReceived += SerialPort_DataReceived;
                 _serialPort.Open();
+                _serialPort.DiscardInBuffer();
+                _serialPort.DiscardOutBuffer();
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -141,8 +151,7 @@ namespace DyDrums.Services
 
         public void SendHandshake()
         {
-            const int totalPads = 15;
-            byte[] parameters = new byte[] { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x0D, 0x0E, 0x0F };
+            const byte CMD_SEND_ALL_PADS = 0x25;
 
             if (!EnsurePortOpen())
             {
@@ -150,23 +159,9 @@ namespace DyDrums.Services
                 return;
             }
 
-            for (int pad = 0; pad < totalPads; pad++)
-            {
-                foreach (byte param in parameters)
-                {
-                    byte[] sysex = BuildSysExRequest((byte)pad, param);
-                    _serialPort.Write(sysex, 0, sysex.Length);
-                    Thread.Sleep(5); // Em todos os testes, este valor foi o mais performático. (0 = tartaruga, 50 = erro)
-                }
-            }
-
-            byte[] endMessage = new byte[] { 0xF0, 0x77, 0x02, 0x7F, 0x7F, 0x7F, 0xF7 };
-            _serialPort.Write(endMessage, 0, endMessage.Length);
-        }
-
-        private byte[] BuildSysExRequest(byte pad, byte param)
-        {
-            return new byte[] { 0xF0, 0x77, 0x02, pad, param, 0x00, 0xF7 };
+            // Envia o comando mágico para o Arduino enviar tudo
+            _serialPort.Write(new byte[] { CMD_SEND_ALL_PADS }, 0, 1);
+            Debug.WriteLine("[Serial] Handshake enviado: CMD_SEND_ALL_PADS (0x25)");
         }
 
         private bool EnsurePortOpen()
@@ -189,27 +184,94 @@ namespace DyDrums.Services
 
         private void ParseSysExMessage(byte[] data)
         {
-            int padIndex = data[3];
-            byte paramId = data[4];
-            int value = data[5];
-            if (padIndex < 0 || padIndex > 14)
-            {
+            if (data == null || data.Length < 4)
                 return;
-            }
-            if (data == null || data.Length < 7)
+
+            if (data[0] != 0xF0 || data[1] != 0x77 || data[^1] != 0xF7)
+                return;
+
+            // Mensagem de fim de transmissão
+            if (data[2] == 0x7F)
             {
+                Debug.WriteLine("✅ SysEx de fim da transmissão recebido.");
+                SysExTransmissionComplete?.Invoke(); // novo evento que vamos usar no Controller
                 return;
             }
 
-            // Formato esperado: F0 77 02 <PAD_INDEX> <PARAM_ID> <VALUE> F7
-            if (data[0] != 0xF0 || data[1] != 0x77 || data[2] != 0x02 || data[^1] != 0xF7)
+            // Mensagem de parâmetro de pad
+            if (data.Length >= 7 && data[2] == 0x02)
             {
-                return;
-            }
+                int padIndex = data[3];
+                byte paramId = data[4];
+                int value = data[5];
 
-            // Aciona o evento para notificar o SerialController
-            SysExParameterReceived?.Invoke(padIndex, paramId, value);
+                Debug.WriteLine($"[SysEx] PadIndex: {padIndex} - ParamId: {paramId} - Valor: {value}");
+                SysExParameterReceived?.Invoke(padIndex, paramId, value);
+            }
         }
+
+
+        //EM DESENVOLVIMENTO
+        public void SendAllPadsToArduino(List<Pad> pads)
+        {
+            if (_serialPort == null || !_serialPort.IsOpen)
+            {
+                Debug.WriteLine("[SendAllPads] Porta serial não está aberta.");
+                return;
+            }
+
+            foreach (var pad in pads)
+            {
+                SendPadToArduino(pad);
+                Thread.Sleep(10); // delayzinho entre pads (ajusta se precisar)
+            }
+
+            Debug.WriteLine("[SendAllPads] Envio completo.");
+        }
+
+        public void SendPadToArduino(Pad pad)
+        {
+            Dictionary<byte, int> parametros = new Dictionary<byte, int>
+            {
+                { 0x00, pad.Note },
+                { 0x01, pad.Threshold },
+                { 0x02, pad.ScanTime },
+                { 0x03, pad.MaskTime },
+                { 0x04, pad.Retrigger },
+                { 0x05, pad.Curve },
+                { 0x06, pad.Xtalk },
+                { 0x07, pad.XtalkGroup },
+                { 0x08, pad.CurveForm },
+                { 0x0D, pad.Type },
+                { 0x0E, pad.Channel },
+                { 0x0F, pad.Gain },
+            };
+
+            foreach (var kvp in parametros)
+            {
+                byte[] sysex = BuildSysExWrite(pad.Id, kvp.Key, kvp.Value);
+                _serialPort.Write(sysex, 0, sysex.Length);
+                Thread.Sleep(5); // delay entre parâmetros
+            }
+
+            Debug.WriteLine($"[SendPad] PAD {pad.Id} enviado.");
+        }
+
+        private byte[] BuildSysExWrite(int padId, byte paramId, int value)
+        {
+            return new byte[]
+            {
+                0xF0,
+                0x77,
+                0x01, // código de escrita
+                (byte)padId,
+                paramId,
+                (byte)value,
+                0xF7
+            };
+        }
+
+
     }
 }
 

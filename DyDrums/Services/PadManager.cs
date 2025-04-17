@@ -21,7 +21,7 @@ public class PadManager
         if (!File.Exists(_configPath))
         {
             CreateDefaultPads();
-            SavePads(Pads);
+            SaveAllPads(Pads);
             return;
         }
 
@@ -35,11 +35,11 @@ public class PadManager
         {
             MessageBox.Show($"[PadManager] Erro ao carregar JSON: {ex.Message}");
             CreateDefaultPads();
-            SavePads(Pads);
+            SaveAllPads(Pads);
         }
     }
-
-    public void SavePads(List<Pad> Pads)
+    //Sempre salva todos, mesmo sem alteração. Não interfere no processamento e garante a integridade do arquivo
+    public void SaveAllPads(List<Pad> Pads)
     {
         try
         {

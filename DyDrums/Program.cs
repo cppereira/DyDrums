@@ -12,6 +12,8 @@ namespace DyDrums
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
             Application.Run(new MainForm());
+            Application.EnableVisualStyles(); // já deve estar aí
+            Application.VisualStyleState = System.Windows.Forms.VisualStyles.VisualStyleState.NoneEnabled;
         }
     }
 }

@@ -1,7 +1,9 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using DyDrums.Controllers;
 using DyDrums.Models;
 using DyDrums.Services;
+using DyDrums.Views;
 using DyDrums.Views.Interfaces;
 
 namespace DyDrums
@@ -15,6 +17,9 @@ namespace DyDrums
         private PadManager _padManager;
         private EEPROMManager _eepromManager;
         private EEPROMController _eepromController;
+        private List<Pad>? allPads;
+        private HHCVerticalProgressBar _hHCVerticalProgressBar;
+
 
         public MainForm()
         {
@@ -26,12 +31,14 @@ namespace DyDrums
 
 
             //Atualizar JSON e Arduino direto da Grid
+            PadsGridView.CellEndEdit += PadsGridView_CellEndEdit;
             PadsGridView.CellValueChanged += PadsGridView_CellValueChanged;
             PadsGridView.CellEndEdit += (s, e) =>
             {
                 if (PadsGridView.IsCurrentCellDirty)
                     PadsGridView.CommitEdit(DataGridViewDataErrorContexts.Commit);
             };
+
 
         }
 
@@ -40,6 +47,8 @@ namespace DyDrums
             SetupConnectCheckBox();
             RegisterSerialEvents();
             LoadInitialData();
+            allPads = new List<Pad>(_padManager.Pads);
+            UpdateGrid(allPads);
         }
 
         private void InitializeManagersAndControllers()
@@ -96,11 +105,11 @@ namespace DyDrums
 
         private void UpdateHHCProgressBar(int data2)
         {
-            if (HHCVerticalProgressBar != null)
+            if (HHCVerticalProgressBar2 != null)
             {
-                int max = HHCVerticalProgressBar.Maximum;
+                int max = HHCVerticalProgressBar2.Maximum;
                 int invertedValue = max - data2;
-                HHCVerticalProgressBar.Value = Math.Max(HHCVerticalProgressBar.Minimum, invertedValue);
+                HHCVerticalProgressBar2.Value = Math.Max(HHCVerticalProgressBar2.Minimum, invertedValue);
             }
         }
 
@@ -148,6 +157,9 @@ namespace DyDrums
             {
                 if (ConnectCheckBox.Checked)
                 {
+                    //Thread.Sleep(5000);
+                    MessageBox.Show("Conectado!", "AVISO", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    SendAllPadsButton.Enabled = true;
                     PadsGridView.Enabled = true;
                     MidiMonitorRichText.Enabled = true;
                     MidiMonitorClearButton.Enabled = true;
@@ -171,6 +183,7 @@ namespace DyDrums
                 }
                 else
                 {
+                    SendAllPadsButton.Enabled = false;
                     PadsGridView.Enabled = false;
                     MidiMonitorRichText.Enabled = false;
                     MidiMonitorClearButton.Enabled = false;
@@ -189,7 +202,17 @@ namespace DyDrums
         {
             this.Invoke(() =>
             {
+                int maxLines = 30;
                 string timestamp = DateTime.Now.ToString("ss,fff");
+                string formatted = string.Format("[{0}] => Canal: {1,-2} | Nota: {2,-3} | Velocity: {3,-3}", timestamp, channel, note, velocity);
+
+
+                if (MidiMonitorRichText.GetLineFromCharIndex(MidiMonitorRichText.TextLength) > maxLines)
+                {
+                    int firstCharIndex = MidiMonitorRichText.GetFirstCharIndexFromLine(1); // ignora a primeira linha
+                    MidiMonitorRichText.Select(0, firstCharIndex);
+                    MidiMonitorRichText.Clear(); // remove sem mexer em formatação restante
+                }
 
                 MidiMonitorRichText.SelectionFont = new Font(MidiMonitorRichText.Font, FontStyle.Bold);
                 switch (note)
@@ -212,11 +235,14 @@ namespace DyDrums
                     default: MidiMonitorRichText.SelectionColor = Color.Black; break;
                 }
 
-                string formatted = string.Format("[{0}] => Canal: {1,-2} | Nota: {2,-3} | Velocity: {3,-3}", timestamp, channel, note, velocity);
-                MidiMonitorRichText.AppendText(formatted + Environment.NewLine);
-                MidiMonitorRichText.SelectionStart = MidiMonitorRichText.Text.Length;
+                // Garante que vai inserir no fim
+                MidiMonitorRichText.SelectionStart = MidiMonitorRichText.TextLength;
+                MidiMonitorRichText.SelectionLength = 0;
+
+                // Já tem font e cor definidos
+                MidiMonitorRichText.SelectedText = formatted + Environment.NewLine;
                 MidiMonitorRichText.ScrollToCaret();
-                Application.DoEvents();
+
 
                 // Envia para o MIDI
                 //_midiManager.SendNoteOn(note, velocity, 0);
@@ -246,6 +272,7 @@ namespace DyDrums
             });
         }
 
+
         private void EEPROMReadButton_Click(object sender, EventArgs e)
         {
             _serialController?.StartHandshake();
@@ -266,7 +293,8 @@ namespace DyDrums
 
             // Solução definitiva para erro de DataSource mal resolvido
             PadsGridView.DataSource = null;
-            PadsGridView.Rows.Clear(); // limpa tudo
+            PadsGridView.DataSource = pads;
+            // PadsGridView.Rows.Clear(); // limpa tudo
             PadsGridView.Refresh(); // força a UI a perceber a mudança
 
             // Clona a lista se ela vier de um binding anterior
@@ -284,7 +312,7 @@ namespace DyDrums
                 CurveForm = p.CurveForm,
                 Xtalk = p.Xtalk,
                 XtalkGroup = p.XtalkGroup,
-                Channel = p.Channel,
+                Channel = p.Channel + 1,
                 Gain = p.Gain
             }).ToList();
 
@@ -326,8 +354,8 @@ namespace DyDrums
                 }
 
                 // Salva no JSON via PadManager
-                _padManager.SavePads(pads);
-                MessageBox.Show("Alterações salvas com sucesso.", "Atualização da Grid", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                _padManager.SaveAllPads(pads);
+                MessageBox.Show("Alterações salvas no JSON.", "Atualização da Grid", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -335,6 +363,163 @@ namespace DyDrums
                 //MessageBox.Show($"[Grid] Erro ao salvar alterações: {ex.Message}");
             }
         }
+
+        private void SendAllPadsButton_Click(object sender, EventArgs e)
+        {
+            if (_serialManager == null)
+            {
+                MessageBox.Show("SerialManager não está inicializado.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (_padManager == null || _padManager.Pads == null || !_padManager.Pads.Any())
+            {
+                MessageBox.Show("Nenhum dado de pad encontrado para enviar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            DialogResult result = MessageBox.Show(
+                "Tem certeza que deseja enviar TODOS os dados para o Arduino?",
+                "Confirmar envio",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                Debug.WriteLine("[Botão] Enviando todos os pads para o Arduino...");
+                _serialManager.SendAllPadsToArduino(_padManager.Pads);
+                MessageBox.Show("Todos os dados foram enviados para o Arduino com sucesso.", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
+        }
+
+        private void PadsGridView_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+
+            var pad = allPads[e.RowIndex];
+            var columnName = PadsGridView.Columns[e.ColumnIndex].Name;
+            var cell = PadsGridView.Rows[e.RowIndex].Cells[e.ColumnIndex];
+            var newValue = cell.Value?.ToString()?.Trim();
+
+            try
+            {
+                bool changed = false;
+
+                switch (columnName)
+                {
+                    case "Type":
+                        if (int.TryParse(newValue, out var type) && pad.Type != type)
+                        {
+                            pad.Type = type;
+                            changed = true;
+                        }
+                        break;
+
+                    case "Name":
+                        if (pad.Name != newValue)
+                        {
+                            pad.Name = newValue ?? "";
+                            changed = true;
+                        }
+                        break;
+
+                    case "Note":
+                        if (int.TryParse(newValue, out var note) && pad.Note != note)
+                        {
+                            pad.Note = note;
+                            changed = true;
+                        }
+                        break;
+                    case "Threshold":
+                        if (int.TryParse(newValue, out var threshold) && pad.Threshold != threshold)
+                        {
+                            pad.Threshold = threshold;
+                            changed = true;
+                        }
+                        break;
+                    case "ScanTime":
+                        if (int.TryParse(newValue, out var scanTime) && pad.ScanTime != scanTime)
+                        {
+                            pad.Threshold = scanTime;
+                            changed = true;
+                        }
+                        break;
+                    case "MaskTime":
+                        if (int.TryParse(newValue, out var maskTime) && pad.MaskTime != maskTime)
+                        {
+                            pad.MaskTime = maskTime;
+                            changed = true;
+                        }
+                        break;
+                    case "Retrigger":
+                        if (int.TryParse(newValue, out var retrigger) && pad.Retrigger != retrigger)
+                        {
+                            pad.Retrigger = retrigger;
+                            changed = true;
+                        }
+                        break;
+                    case "Curve":
+                        if (int.TryParse(newValue, out var curve) && pad.Curve != curve)
+                        {
+                            pad.Curve = curve;
+                            changed = true;
+                        }
+                        break;
+                    case "CurveForm":
+                        if (int.TryParse(newValue, out var curveForm) && pad.CurveForm != curveForm)
+                        {
+                            pad.CurveForm = curveForm;
+                            changed = true;
+                        }
+                        break;
+                    case "Xtalk":
+                        if (int.TryParse(newValue, out var xtalk) && pad.Xtalk != xtalk)
+                        {
+                            pad.Xtalk = xtalk;
+                            changed = true;
+                        }
+                        break;
+                    case "XtalkGroup":
+                        if (int.TryParse(newValue, out var xtalkGroup) && pad.XtalkGroup != xtalkGroup)
+                        {
+                            pad.XtalkGroup = xtalkGroup;
+                            changed = true;
+                        }
+                        break;
+                    case "Channel":
+                        if (int.TryParse(newValue, out var channel) && pad.Channel != channel)
+                        {
+                            pad.Channel = channel;
+                            changed = true;
+                        }
+                        break;
+                    case "Gain":
+                        if (int.TryParse(newValue, out var gain) && pad.Gain != gain)
+                        {
+                            pad.Gain = gain;
+                            changed = true;
+                        }
+                        break;
+                }
+
+                if (changed)
+                {
+                    //Envia apenas o pad alterado para o JSON
+                    _serialController.SendPadsToJSON(allPads);
+                    //Envia apenas o pad alterado para a EEPROM
+                    _serialController.SendPadToArduino(pad);
+
+                    cell.Style.BackColor = Color.LightGreen;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erro ao editar célula: " + ex.Message);
+            }
+        }
+
+
 
     }
 }
