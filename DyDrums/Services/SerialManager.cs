@@ -149,17 +149,17 @@ namespace DyDrums.Services
             return SerialPort.GetPortNames();
         }
 
-        public void SendHandshake(byte command)
+        public void SendHandshake(byte command, bool iswrite = false)
         {
             if (!EnsurePortOpen())
             {
                 MessageBox.Show("A porta serial não está aberta.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-
             byte[] sysex = new byte[] { 0xF0, 0x77, command, 0x00, 0x00, 0x00, 0xF7 };
             _serialPort.Write(sysex, 0, sysex.Length);
             Debug.WriteLine($"[Serial] Handshake enviado: {command} (0x{command:X2})");
+
         }
 
         private bool EnsurePortOpen()
@@ -220,8 +220,16 @@ namespace DyDrums.Services
 
             foreach (var pad in pads)
             {
-                SendPadToArduino(pad);
-                Thread.Sleep(10); // delayzinho entre pads (ajusta se precisar)
+                try
+                {
+                    SendPadToArduino(pad);
+                    Thread.Sleep(10); // delayzinho entre pads (ajusta se precisar)
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[SendAllPads] Falha ao enviar pad {pad.Id}: {ex.Message}");
+                }
+
             }
 
             Debug.WriteLine("[SendAllPads] Envio completo.");
@@ -247,8 +255,11 @@ namespace DyDrums.Services
 
             foreach (var kvp in parametros)
             {
-                byte[] sysex = BuildSysExWrite(pad.Id, kvp.Key, kvp.Value);
-                _serialPort.Write(sysex, 0, sysex.Length);
+                byte[] rawPacket = new byte[] { 0x26, (byte)pad.Id, (byte)kvp.Key, (byte)kvp.Value };
+                _serialPort.Write(rawPacket, 0, rawPacket.Length);
+
+                //byte[] sysex = BuildSysExWrite(pad.Id, kvp.Key, kvp.Value);
+                //_serialPort.Write(sysex, 0, sysex.Length);
                 Thread.Sleep(5); // delay entre parâmetros
             }
 

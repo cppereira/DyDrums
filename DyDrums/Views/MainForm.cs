@@ -324,6 +324,7 @@ namespace DyDrums
 
         private void SendAllPadsButton_Click(object sender, EventArgs e)
         {
+            byte command = 0x26;
             if (_serialManager == null)
             {
                 MessageBox.Show("SerialManager não está inicializado.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -345,7 +346,9 @@ namespace DyDrums
             if (result == DialogResult.Yes)
             {
                 Debug.WriteLine("[Botão] Enviando todos os pads para o Arduino...");
-                _serialManager.SendAllPadsToArduino(_padManager.Pads);
+                _serialManager.SendHandshake(0x26, true); // ativa write mode, envia, finaliza
+                _serialManager.SendAllPadsToArduino(allPads);
+                _serialManager.SendHandshake(0x28); //envia mensagem de FIM para arduino...            
                 MessageBox.Show("Todos os dados foram enviados para o Arduino com sucesso.", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
 
