@@ -149,19 +149,17 @@ namespace DyDrums.Services
             return SerialPort.GetPortNames();
         }
 
-        public void SendHandshake()
+        public void SendHandshake(byte command)
         {
-            const byte CMD_SEND_ALL_PADS = 0x25;
-
             if (!EnsurePortOpen())
             {
-                MessageBox.Show($"A Porta Serial não está aberta.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("A porta serial não está aberta.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            // Envia o comando mágico para o Arduino enviar tudo
-            _serialPort.Write(new byte[] { CMD_SEND_ALL_PADS }, 0, 1);
-            Debug.WriteLine("[Serial] Handshake enviado: CMD_SEND_ALL_PADS (0x25)");
+            byte[] sysex = new byte[] { 0xF0, 0x77, command, 0x00, 0x00, 0x00, 0xF7 };
+            _serialPort.Write(sysex, 0, sysex.Length);
+            Debug.WriteLine($"[Serial] Handshake enviado: {command} (0x{command:X2})");
         }
 
         private bool EnsurePortOpen()

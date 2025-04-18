@@ -32,7 +32,6 @@ namespace DyDrums
 
             //Atualizar JSON e Arduino direto da Grid
             PadsGridView.CellEndEdit += PadsGridView_CellEndEdit;
-            PadsGridView.CellValueChanged += PadsGridView_CellValueChanged;
             PadsGridView.CellEndEdit += (s, e) =>
             {
                 if (PadsGridView.IsCurrentCellDirty)
@@ -89,6 +88,9 @@ namespace DyDrums
             _padManager.LoadPads();
             PopulateGrid();
             PadsGridView.DataSource = new BindingList<Pad>(_padManager.Pads);
+
+            //Envia o Pads para o Controller, para manter os Nomes dos pads carregados do JSON, pois o Arduino nao salva nomes....
+            _serialController.InitializePadList(_padManager.Pads);
         }
 
         private void OnHHCValueReceived(int data2)
@@ -158,7 +160,7 @@ namespace DyDrums
                 if (ConnectCheckBox.Checked)
                 {
                     //Thread.Sleep(5000);
-                    MessageBox.Show("Conectado!", "AVISO", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    //MessageBox.Show("Conectado!", "AVISO", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     SendAllPadsButton.Enabled = true;
                     PadsGridView.Enabled = true;
                     MidiMonitorRichText.Enabled = true;
@@ -275,7 +277,8 @@ namespace DyDrums
 
         private void EEPROMReadButton_Click(object sender, EventArgs e)
         {
-            _serialController?.StartHandshake();
+            byte command = 0x25;
+            _serialController?.StartHandshake(command);
         }
 
         private void MidiMonitorClearButton_Click(object sender, EventArgs e)
@@ -302,7 +305,7 @@ namespace DyDrums
             {
                 Id = p.Id,
                 Type = p.Type,
-                Name = p.Name,
+                PadName = p.PadName,
                 Note = p.Note,
                 Threshold = p.Threshold,
                 ScanTime = p.ScanTime,
@@ -317,51 +320,6 @@ namespace DyDrums
             }).ToList();
 
             PadsGridView.DataSource = padsClone;
-        }
-
-        private void PadsGridView_CellValueChanged(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
-
-            try
-            {
-                // Atualiza a lista de Pads com base na nova célula editada
-                var pads = new List<Pad>();
-
-                foreach (DataGridViewRow row in PadsGridView.Rows)
-                {
-                    if (row.IsNewRow) continue;
-
-                    var pad = new Pad
-                    {
-                        //Id = Convert.ToInt32(row.Cells["Id"].Value),
-                        Type = Convert.ToInt32(row.Cells["Type"].Value),
-                        Name = row.Cells["PadName"].Value?.ToString(),
-                        Note = Convert.ToInt32(row.Cells["Note"].Value),
-                        Threshold = Convert.ToInt32(row.Cells["Threshold"].Value),
-                        ScanTime = Convert.ToInt32(row.Cells["ScanTime"].Value),
-                        MaskTime = Convert.ToInt32(row.Cells["MaskTime"].Value),
-                        Retrigger = Convert.ToInt32(row.Cells["Retrigger"].Value),
-                        Curve = Convert.ToInt32(row.Cells["Curve"].Value),
-                        CurveForm = Convert.ToInt32(row.Cells["CurveForm"].Value),
-                        Xtalk = Convert.ToInt32(row.Cells["Xtalk"].Value),
-                        XtalkGroup = Convert.ToInt32(row.Cells["XtalkGroup"].Value),
-                        Channel = Convert.ToInt32(row.Cells["Channel"].Value),
-                        Gain = Convert.ToInt32(row.Cells["Gain"].Value),
-                    };
-
-                    pads.Add(pad);
-                }
-
-                // Salva no JSON via PadManager
-                _padManager.SaveAllPads(pads);
-                MessageBox.Show("Alterações salvas no JSON.", "Atualização da Grid", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"{ex.Message}", "ERRO", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                //MessageBox.Show($"[Grid] Erro ao salvar alterações: {ex.Message}");
-            }
         }
 
         private void SendAllPadsButton_Click(object sender, EventArgs e)
@@ -416,10 +374,10 @@ namespace DyDrums
                         }
                         break;
 
-                    case "Name":
-                        if (pad.Name != newValue)
+                    case "PadName":
+                        if (pad.PadName != newValue)
                         {
-                            pad.Name = newValue ?? "";
+                            pad.PadName = newValue;
                             changed = true;
                         }
                         break;
@@ -507,8 +465,6 @@ namespace DyDrums
                 {
                     //Envia apenas o pad alterado para o JSON
                     _serialController.SendPadsToJSON(allPads);
-                    //Envia apenas o pad alterado para a EEPROM
-                    _serialController.SendPadToArduino(pad);
 
                     cell.Style.BackColor = Color.LightGreen;
                 }
@@ -519,7 +475,14 @@ namespace DyDrums
             }
         }
 
+        private void COMPortsScanButton_Click(object sender, EventArgs e)
+        {
+            _serialController.GetCOMPorts();
+        }
 
-
+        private void MidiDevicesScanButton_Click(object sender, EventArgs e)
+        {
+            _midiController.GetMidiDevices();
+        }
     }
 }

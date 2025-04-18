@@ -65,7 +65,7 @@ public class PadManager
             {
 
                 Type = 0,
-                Name = $"Pad {i + 1}", // assumindo que a propriedade é Name, não PadName
+                PadName = $"Pad {i + 1}", // assumindo que a propriedade é Name, não PadName
                 Note = 0,
                 Threshold = 0,
                 ScanTime = 0,

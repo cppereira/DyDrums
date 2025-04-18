@@ -4,7 +4,7 @@
     {
         public int Id { get; set; }
         public int Type { get; set; }
-        public string Name { get; set; }
+        public string PadName { get; set; }
         public int Note { get; set; }
         public int Threshold { get; set; }
         public int ScanTime { get; set; }

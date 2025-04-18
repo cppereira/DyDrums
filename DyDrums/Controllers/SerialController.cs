@@ -64,9 +64,13 @@ namespace DyDrums.Controllers
 
                 var pad = PadFactory.FromParameters(padIndex, paramDict);
 
-                if (_padList.TryGetValue(pad.Id, out var existingPad))
+                if (_padList.TryGetValue(pad.Id, out var _padListCache))
                 {
-                    pad.Name = existingPad.Name;
+                    // Aqui pegava do pad antigo
+                    if (string.IsNullOrWhiteSpace(pad.PadName))
+                    {
+                        pad.PadName = _padListCache.PadName;
+                    }
                 }
 
                 _padList[pad.Id] = pad;
@@ -111,9 +115,14 @@ namespace DyDrums.Controllers
             _serialManager.Disconnect();
         }
 
-        public void StartHandshake()
+        public void StartHandshake(byte command)
         {
-            _serialManager.SendHandshake();
+            _serialManager.SendHandshake(command);
+        }
+
+        public void InitializePadList(List<Pad> pads)
+        {
+            _padList = pads.ToDictionary(p => p.Id);
         }
     }
 }

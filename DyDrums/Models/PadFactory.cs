@@ -7,6 +7,7 @@ public static class PadFactory
         {
             //Parâmetros correspondentes ao firmware original do Arduino, não alterar...
             Id = id, // Index/PIN
+
             Note = Get(parameters, 0x00),
             Threshold = Get(parameters, 0x01),
             ScanTime = Get(parameters, 0x02),
@@ -18,7 +19,8 @@ public static class PadFactory
             Xtalk = Get(parameters, 0x08),
             XtalkGroup = Get(parameters, 0x0D),
             Channel = Get(parameters, 0x0E),
-            Type = Get(parameters, 0x0F)
+            Type = Get(parameters, 0x0F),
+            PadName = null
 
         };
     }
