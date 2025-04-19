@@ -239,18 +239,18 @@ namespace DyDrums.Services
         {
             Dictionary<byte, int> parametros = new Dictionary<byte, int>
             {
-                { 0x00, pad.Note },
-                { 0x01, pad.Threshold },
-                { 0x02, pad.ScanTime },
-                { 0x03, pad.MaskTime },
-                { 0x04, pad.Retrigger },
-                { 0x05, pad.Curve },
-                { 0x06, pad.Xtalk },
-                { 0x07, pad.XtalkGroup },
-                { 0x08, pad.CurveForm },
-                { 0x0D, pad.Type },
-                { 0x0E, pad.Channel },
-                { 0x0F, pad.Gain },
+                { 0x00, pad.Type },
+                { 0x01, pad.Note },
+                { 0x02, pad.Threshold },
+                { 0x03, pad.ScanTime },
+                { 0x04, pad.MaskTime },
+                { 0x05, pad.Retrigger },
+                { 0x06, pad.Curve },
+                { 0x07, pad.CurveForm },
+                { 0x08, pad.Xtalk },
+                { 0x09, pad.XtalkGroup },
+                { 0x0A, pad.Channel },
+                { 0x0B, pad.Gain },
             };
 
             foreach (var kvp in parametros)

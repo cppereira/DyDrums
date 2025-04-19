@@ -3,8 +3,8 @@
     public class PadModel
     {
         public int Pin { get; set; }
-        public string Name { get; set; }
         public int Type { get; set; }
+        public string Name { get; set; }        
         public int Note { get; set; }
         public int Threshold { get; set; }
         public int ScanTime { get; set; }

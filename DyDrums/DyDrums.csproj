@@ -9,6 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Models\PadModel.cs" />
+    <Compile Remove="Models\PadParameter.cs" />
+    <Compile Remove="Models\PadParameterId.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Resources\" />
   </ItemGroup>
 
