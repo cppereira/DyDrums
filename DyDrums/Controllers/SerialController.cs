@@ -122,7 +122,12 @@ namespace DyDrums.Controllers
 
         public void InitializePadList(List<Pad> pads)
         {
-            _padList = pads.ToDictionary(p => p.Id);
+            _padList = new Dictionary<int, Pad>();
+            foreach (var pad in pads)
+            {
+                _padList[pad.Id] = pad; // se repetir, esse substitui
+            }
         }
+
     }
 }
