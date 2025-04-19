@@ -60,7 +60,7 @@
             MidiMonitorClearButton = new Button();
             MidiMonitorLabel = new Label();
             MidiMonitorRichText = new RichTextBox();
-            SendAllPadsButton = new Button();
+            EEPROMWriteButton = new Button();
             ConnectionGroupBox.SuspendLayout();
             PadsTableGroupBox.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)PadsGridView).BeginInit();
@@ -339,16 +339,16 @@
             MidiMonitorRichText.TabIndex = 4;
             MidiMonitorRichText.Text = "";
             // 
-            // SendAllPadsButton
+            // EEPROMWriteButton
             // 
-            SendAllPadsButton.Enabled = false;
-            SendAllPadsButton.Location = new Point(1081, 104);
-            SendAllPadsButton.Name = "SendAllPadsButton";
-            SendAllPadsButton.Size = new Size(233, 39);
-            SendAllPadsButton.TabIndex = 4;
-            SendAllPadsButton.Text = "Enviar tudo para o Arduino";
-            SendAllPadsButton.UseVisualStyleBackColor = true;
-            SendAllPadsButton.Click += SendAllPadsButton_Click;
+            EEPROMWriteButton.Enabled = false;
+            EEPROMWriteButton.Location = new Point(1081, 104);
+            EEPROMWriteButton.Name = "EEPROMWriteButton";
+            EEPROMWriteButton.Size = new Size(233, 39);
+            EEPROMWriteButton.TabIndex = 4;
+            EEPROMWriteButton.Text = "Enviar tudo para o Arduino";
+            EEPROMWriteButton.UseVisualStyleBackColor = true;
+            EEPROMWriteButton.Click += EEPROMWriteButton_Click;
             // 
             // MainForm
             // 
@@ -356,7 +356,7 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.Window;
             ClientSize = new Size(1334, 611);
-            Controls.Add(SendAllPadsButton);
+            Controls.Add(EEPROMWriteButton);
             Controls.Add(MonitorGroupBox);
             Controls.Add(EEPROMReadButton);
             Controls.Add(PadsTableGroupBox);
@@ -390,7 +390,7 @@
         private RichTextBox MidiMonitorRichText;
         private Button MidiMonitorClearButton;
         private Label HHCProgressBarLabel;
-        private Button SendAllPadsButton;
+        private Button EEPROMWriteButton;
         private Views.HHCVerticalProgressBar HHCVerticalProgressBar;
         private Views.HHCVerticalProgressBar HHCVerticalProgressBar2;
         private DataGridViewTextBoxColumn ID;

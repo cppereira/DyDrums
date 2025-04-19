@@ -10,6 +10,11 @@ namespace DyDrums
 {
     public partial class MainForm : Form, IMainFormView
     {
+        //Define o comando para solicitar todos os Pads para o Firmware
+        public const byte CMD_GET_ALL_PADS = 0x25;
+        //Define o comando para eniar todos os Pads para o Firmware
+        public const byte CMD_SET_ALL_PADS = 0x26;
+
         private SerialController _serialController;
         private MidiController _midiController;
         private SerialManager _serialManager;
@@ -19,8 +24,6 @@ namespace DyDrums
         private EEPROMController _eepromController;
         private List<Pad>? allPads;
         private HHCVerticalProgressBar _hHCVerticalProgressBar;
-
-
         public MainForm()
         {
             InitializeComponent();
@@ -161,7 +164,7 @@ namespace DyDrums
                 {
                     //Thread.Sleep(5000);
                     //MessageBox.Show("Conectado!", "AVISO", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    SendAllPadsButton.Enabled = true;
+                    EEPROMWriteButton.Enabled = true;
                     PadsGridView.Enabled = true;
                     MidiMonitorRichText.Enabled = true;
                     MidiMonitorClearButton.Enabled = true;
@@ -185,7 +188,7 @@ namespace DyDrums
                 }
                 else
                 {
-                    SendAllPadsButton.Enabled = false;
+                    EEPROMWriteButton.Enabled = false;
                     PadsGridView.Enabled = false;
                     MidiMonitorRichText.Enabled = false;
                     MidiMonitorClearButton.Enabled = false;
@@ -277,8 +280,40 @@ namespace DyDrums
 
         private void EEPROMReadButton_Click(object sender, EventArgs e)
         {
-            byte command = 0x25;
+            byte command = CMD_GET_ALL_PADS;
             _serialController?.StartHandshake(command);
+        }
+
+        private void EEPROMWriteButton_Click(object sender, EventArgs e)
+        {
+            byte command = CMD_SET_ALL_PADS;
+            if (_serialManager == null)
+            {
+                MessageBox.Show("SerialManager não está inicializado.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (_padManager == null || _padManager.Pads == null || !_padManager.Pads.Any())
+            {
+                MessageBox.Show("Nenhum dado de pad encontrado para enviar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            DialogResult result = MessageBox.Show(
+                "Tem certeza que deseja enviar TODOS os dados para o Arduino?",
+                "Confirmar envio",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                Debug.WriteLine("[Botão] Enviando todos os pads para o Arduino...");
+                _serialManager.SendHandshake(0x26, true); // ativa write mode, envia, finaliza
+                _serialManager.SendAllPadsToArduino(allPads);
+                _serialManager.SendHandshake(0x28); //envia mensagem de FIM para arduino...            
+                MessageBox.Show("Todos os dados foram enviados para o Arduino com sucesso.", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
         }
 
         private void MidiMonitorClearButton_Click(object sender, EventArgs e)
@@ -322,37 +357,7 @@ namespace DyDrums
             PadsGridView.DataSource = padsClone;
         }
 
-        private void SendAllPadsButton_Click(object sender, EventArgs e)
-        {
-            byte command = 0x26;
-            if (_serialManager == null)
-            {
-                MessageBox.Show("SerialManager não está inicializado.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
 
-            if (_padManager == null || _padManager.Pads == null || !_padManager.Pads.Any())
-            {
-                MessageBox.Show("Nenhum dado de pad encontrado para enviar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            DialogResult result = MessageBox.Show(
-                "Tem certeza que deseja enviar TODOS os dados para o Arduino?",
-                "Confirmar envio",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
-
-            if (result == DialogResult.Yes)
-            {
-                Debug.WriteLine("[Botão] Enviando todos os pads para o Arduino...");
-                _serialManager.SendHandshake(0x26, true); // ativa write mode, envia, finaliza
-                _serialManager.SendAllPadsToArduino(allPads);
-                _serialManager.SendHandshake(0x28); //envia mensagem de FIM para arduino...            
-                MessageBox.Show("Todos os dados foram enviados para o Arduino com sucesso.", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-
-        }
 
         private void PadsGridView_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {

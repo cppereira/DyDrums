@@ -7,11 +7,6 @@ namespace DyDrums.Services
 {
     public class SerialManager
     {
-        //Define o comando para solicitar todos os Pads para o Firmware
-        public const byte CMD_SEND_ALL_PADS = 0x25;
-
-
-
         private SerialPort _serialPort;
         private MainForm _mainForm;
         private MidiController _midiController;
@@ -208,7 +203,6 @@ namespace DyDrums.Services
             }
         }
 
-
         //EM DESENVOLVIMENTO
         public void SendAllPadsToArduino(List<Pad> pads)
         {
@@ -222,8 +216,9 @@ namespace DyDrums.Services
             {
                 try
                 {
+                    Debug.WriteLine($"Pad enviado (NOTA): [{pad.Note}]");
                     SendPadToArduino(pad);
-                    Thread.Sleep(10); // delayzinho entre pads (ajusta se precisar)
+                    Thread.Sleep(5); // delayzinho entre pads (ajusta se precisar)
                 }
                 catch (Exception ex)
                 {
@@ -255,11 +250,8 @@ namespace DyDrums.Services
 
             foreach (var kvp in parametros)
             {
-                byte[] rawPacket = new byte[] { 0x26, (byte)pad.Id, (byte)kvp.Key, (byte)kvp.Value };
-                _serialPort.Write(rawPacket, 0, rawPacket.Length);
-
-                //byte[] sysex = BuildSysExWrite(pad.Id, kvp.Key, kvp.Value);
-                //_serialPort.Write(sysex, 0, sysex.Length);
+                byte[] sysex = BuildSysExWrite(pad.Id, kvp.Key, kvp.Value);
+                _serialPort.Write(sysex, 0, sysex.Length);
                 Thread.Sleep(5); // delay entre parâmetros
             }
 
@@ -272,15 +264,13 @@ namespace DyDrums.Services
             {
                 0xF0,
                 0x77,
-                0x01, // código de escrita
+                0x26, // código de escrita
                 (byte)padId,
                 paramId,
                 (byte)value,
                 0xF7
             };
         }
-
-
     }
 }
 
