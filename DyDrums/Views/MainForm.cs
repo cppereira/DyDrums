@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using DyDrums.Controllers;
+using DyDrums.Helpers;
 using DyDrums.Models;
 using DyDrums.Services;
 using DyDrums.Views;
@@ -94,6 +95,7 @@ namespace DyDrums
 
             //Envia o Pads para o Controller, para manter os Nomes dos pads carregados do JSON, pois o Arduino nao salva nomes....
             _serialController.InitializePadList(_padManager.Pads);
+            SetupComboColumns();
         }
 
         private void OnHHCValueReceived(int data2)
@@ -312,6 +314,7 @@ namespace DyDrums
                 _serialManager.SendAllPadsToArduino(allPads);
                 _serialManager.SendHandshake(0x28); //envia mensagem de FIM para arduino...            
                 MessageBox.Show("Todos os dados foram enviados para o Arduino com sucesso.", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ResetCellStyles();//Reseta as cores das celulas depois de enviar....
             }
 
         }
@@ -407,7 +410,7 @@ namespace DyDrums
                     case "ScanTime":
                         if (int.TryParse(newValue, out var scanTime) && pad.ScanTime != scanTime)
                         {
-                            pad.Threshold = scanTime;
+                            pad.ScanTime = scanTime;
                             changed = true;
                         }
                         break;
@@ -439,14 +442,14 @@ namespace DyDrums
                             changed = true;
                         }
                         break;
-                    case "Xtalk":
+                    case "XTalk":
                         if (int.TryParse(newValue, out var xtalk) && pad.Xtalk != xtalk)
                         {
                             pad.Xtalk = xtalk;
                             changed = true;
                         }
                         break;
-                    case "XtalkGroup":
+                    case "XTalkGroup":
                         if (int.TryParse(newValue, out var xtalkGroup) && pad.XtalkGroup != xtalkGroup)
                         {
                             pad.XtalkGroup = xtalkGroup;
@@ -473,7 +476,6 @@ namespace DyDrums
                 {
                     //Envia apenas o pad alterado para o JSON
                     _serialController.SendPadsToJSON(allPads);
-
                     cell.Style.BackColor = Color.LightGreen;
                 }
             }
@@ -491,6 +493,90 @@ namespace DyDrums
         private void MidiDevicesScanButton_Click(object sender, EventArgs e)
         {
             _midiController.GetMidiDevices();
+        }
+
+        private void PadsGridView_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
+        {
+            var grid = sender as DataGridView;
+            string columnName = grid.Columns[e.ColumnIndex].Name;
+            string displayValue = e.FormattedValue.ToString();
+
+            // Se a coluna for do tipo ComboBox, pegue o valor "por trás"
+            if (grid.Columns[e.ColumnIndex] is DataGridViewComboBoxColumn comboColumn)
+            {
+                if (DataGridValidationRules.ComboBoxValues.TryGetValue(columnName, out var options))
+                {
+                    var match = options.FirstOrDefault(opt => opt.Text == displayValue);
+                    if (match == null)
+                    {
+                        e.Cancel = true;
+                        MessageBox.Show("Opção inválida.");
+                        return;
+                    }
+
+                    // Agora sim valida com o valor numérico real
+                    if (DataGridValidationRules.NumericLimits.TryGetValue(columnName, out var limits))
+                    {
+                        if (match.Value < limits.Min || match.Value > limits.Max)
+                        {
+                            e.Cancel = true;
+                            MessageBox.Show($"Valor inválido. Esperado entre {limits.Min} e {limits.Max}.");
+                        }
+                    }
+
+                    return; // evita validar de novo abaixo
+                }
+            }
+
+            // Validação normal para campos que não são ComboBox
+            if (DataGridValidationRules.NumericLimits.TryGetValue(columnName, out var numLimits))
+            {
+                if (!int.TryParse(displayValue, out int result) || result < numLimits.Min || result > numLimits.Max)
+                {
+                    e.Cancel = true;
+                    MessageBox.Show($"Valor inválido. Esperado entre {numLimits.Min} e {numLimits.Max}.");
+                }
+            }
+        }
+
+        private void SetupComboColumns()
+        {
+            foreach (var comboInfo in DataGridValidationRules.ComboBoxValues)
+            {
+                string columnName = comboInfo.Key;
+                var options = comboInfo.Value;
+
+                if (!PadsGridView.Columns.Contains(columnName))
+                    continue;
+
+                var comboColumn = new DataGridViewComboBoxColumn
+                {
+                    Name = columnName,
+                    HeaderText = columnName,
+                    DataPropertyName = columnName,
+                    DisplayMember = "Text",
+                    ValueMember = "Value"
+                };
+
+                foreach (var opt in options)
+                    comboColumn.Items.Add(opt);
+
+                var oldColumn = PadsGridView.Columns[columnName];
+                int index = oldColumn.Index;
+                PadsGridView.Columns.Remove(oldColumn);
+                PadsGridView.Columns.Insert(index, comboColumn);
+            }
+        }
+
+        private void ResetCellStyles()
+        {
+            foreach (DataGridViewRow row in PadsGridView.Rows)
+            {
+                foreach (DataGridViewCell cell in row.Cells)
+                {
+                    cell.Style.BackColor = PadsGridView.DefaultCellStyle.BackColor;
+                }
+            }
         }
     }
 }

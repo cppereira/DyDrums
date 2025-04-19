@@ -78,14 +78,14 @@
             ConnectionGroupBox.Controls.Add(COMPortsComboBox);
             ConnectionGroupBox.Location = new Point(349, 12);
             ConnectionGroupBox.Name = "ConnectionGroupBox";
-            ConnectionGroupBox.Size = new Size(973, 84);
+            ConnectionGroupBox.Size = new Size(1004, 84);
             ConnectionGroupBox.TabIndex = 0;
             ConnectionGroupBox.TabStop = false;
             ConnectionGroupBox.Text = "Conexão";
             // 
             // MidiDevicesScanButton
             // 
-            MidiDevicesScanButton.Location = new Point(686, 33);
+            MidiDevicesScanButton.Location = new Point(682, 33);
             MidiDevicesScanButton.Name = "MidiDevicesScanButton";
             MidiDevicesScanButton.Size = new Size(42, 23);
             MidiDevicesScanButton.TabIndex = 7;
@@ -105,7 +105,7 @@
             // 
             // ConnectCheckBox
             // 
-            ConnectCheckBox.Location = new Point(800, 23);
+            ConnectCheckBox.Location = new Point(875, 22);
             ConnectCheckBox.Name = "ConnectCheckBox";
             ConnectCheckBox.Size = new Size(74, 19);
             ConnectCheckBox.TabIndex = 5;
@@ -116,7 +116,7 @@
             // MidiDevicesComboBoxLabel
             // 
             MidiDevicesComboBoxLabel.AutoSize = true;
-            MidiDevicesComboBoxLabel.Location = new Point(389, 37);
+            MidiDevicesComboBoxLabel.Location = new Point(385, 37);
             MidiDevicesComboBoxLabel.Name = "MidiDevicesComboBoxLabel";
             MidiDevicesComboBoxLabel.Size = new Size(101, 15);
             MidiDevicesComboBoxLabel.TabIndex = 4;
@@ -134,7 +134,7 @@
             // MidiDevicesComboBox
             // 
             MidiDevicesComboBox.FormattingEnabled = true;
-            MidiDevicesComboBox.Location = new Point(496, 33);
+            MidiDevicesComboBox.Location = new Point(492, 33);
             MidiDevicesComboBox.Name = "MidiDevicesComboBox";
             MidiDevicesComboBox.Size = new Size(184, 23);
             MidiDevicesComboBox.TabIndex = 2;
@@ -152,7 +152,7 @@
             PadsTableGroupBox.Controls.Add(PadsGridView);
             PadsTableGroupBox.Location = new Point(349, 147);
             PadsTableGroupBox.Name = "PadsTableGroupBox";
-            PadsTableGroupBox.Size = new Size(973, 452);
+            PadsTableGroupBox.Size = new Size(1004, 438);
             PadsTableGroupBox.TabIndex = 1;
             PadsTableGroupBox.TabStop = false;
             PadsTableGroupBox.Text = "Pads";
@@ -168,8 +168,9 @@
             PadsGridView.Enabled = false;
             PadsGridView.Location = new Point(10, 30);
             PadsGridView.Name = "PadsGridView";
-            PadsGridView.Size = new Size(955, 416);
+            PadsGridView.Size = new Size(988, 400);
             PadsGridView.TabIndex = 0;
+            PadsGridView.CellValidating += PadsGridView_CellValidating;
             // 
             // ID
             // 
@@ -183,7 +184,8 @@
             Type.DataPropertyName = "Type";
             Type.HeaderText = "Sensor";
             Type.Name = "Type";
-            Type.Width = 70;
+            Type.Resizable = DataGridViewTriState.True;
+            Type.Width = 60;
             // 
             // PadName
             // 
@@ -232,6 +234,7 @@
             Curve.DataPropertyName = "Curve";
             Curve.HeaderText = "Curva";
             Curve.Name = "Curve";
+            Curve.Width = 75;
             // 
             // CurveForm
             // 
@@ -266,17 +269,19 @@
             Gain.DataPropertyName = "Gain";
             Gain.HeaderText = "Ganho";
             Gain.Name = "Gain";
-            Gain.Width = 60;
+            Gain.Width = 65;
             // 
             // EEPROMReadButton
             // 
+            EEPROMReadButton.BackColor = SystemColors.ButtonFace;
             EEPROMReadButton.Enabled = false;
+            EEPROMReadButton.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
             EEPROMReadButton.Location = new Point(349, 104);
             EEPROMReadButton.Name = "EEPROMReadButton";
             EEPROMReadButton.Size = new Size(233, 39);
             EEPROMReadButton.TabIndex = 2;
-            EEPROMReadButton.Text = "Ler dados do Arduino";
-            EEPROMReadButton.UseVisualStyleBackColor = true;
+            EEPROMReadButton.Text = "Ler tudo do Arduino";
+            EEPROMReadButton.UseVisualStyleBackColor = false;
             EEPROMReadButton.Click += EEPROMReadButton_Click;
             // 
             // MonitorGroupBox
@@ -288,7 +293,7 @@
             MonitorGroupBox.Controls.Add(MidiMonitorRichText);
             MonitorGroupBox.Location = new Point(6, 12);
             MonitorGroupBox.Name = "MonitorGroupBox";
-            MonitorGroupBox.Size = new Size(337, 587);
+            MonitorGroupBox.Size = new Size(337, 573);
             MonitorGroupBox.TabIndex = 3;
             MonitorGroupBox.TabStop = false;
             MonitorGroupBox.Text = "Monitor";
@@ -313,7 +318,7 @@
             // MidiMonitorClearButton
             // 
             MidiMonitorClearButton.Enabled = false;
-            MidiMonitorClearButton.Location = new Point(68, 534);
+            MidiMonitorClearButton.Location = new Point(68, 526);
             MidiMonitorClearButton.Name = "MidiMonitorClearButton";
             MidiMonitorClearButton.Size = new Size(179, 39);
             MidiMonitorClearButton.TabIndex = 4;
@@ -341,13 +346,16 @@
             // 
             // EEPROMWriteButton
             // 
+            EEPROMWriteButton.BackColor = SystemColors.ButtonFace;
             EEPROMWriteButton.Enabled = false;
-            EEPROMWriteButton.Location = new Point(1081, 104);
+            EEPROMWriteButton.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            EEPROMWriteButton.ForeColor = SystemColors.ActiveCaptionText;
+            EEPROMWriteButton.Location = new Point(1120, 102);
             EEPROMWriteButton.Name = "EEPROMWriteButton";
             EEPROMWriteButton.Size = new Size(233, 39);
             EEPROMWriteButton.TabIndex = 4;
             EEPROMWriteButton.Text = "Enviar tudo para o Arduino";
-            EEPROMWriteButton.UseVisualStyleBackColor = true;
+            EEPROMWriteButton.UseVisualStyleBackColor = false;
             EEPROMWriteButton.Click += EEPROMWriteButton_Click;
             // 
             // MainForm
@@ -355,7 +363,7 @@
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.Window;
-            ClientSize = new Size(1334, 611);
+            ClientSize = new Size(1359, 591);
             Controls.Add(EEPROMWriteButton);
             Controls.Add(MonitorGroupBox);
             Controls.Add(EEPROMReadButton);
@@ -393,6 +401,8 @@
         private Button EEPROMWriteButton;
         private Views.HHCVerticalProgressBar HHCVerticalProgressBar;
         private Views.HHCVerticalProgressBar HHCVerticalProgressBar2;
+        private Button MidiDevicesScanButton;
+        private Button COMPortsScanButton;
         private DataGridViewTextBoxColumn ID;
         private DataGridViewTextBoxColumn Type;
         private DataGridViewTextBoxColumn PadName;
@@ -407,7 +417,5 @@
         private DataGridViewTextBoxColumn XTalkGroup;
         private DataGridViewTextBoxColumn Channel;
         private DataGridViewTextBoxColumn Gain;
-        private Button MidiDevicesScanButton;
-        private Button COMPortsScanButton;
     }
 }
